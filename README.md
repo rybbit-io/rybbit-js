@@ -1,6 +1,6 @@
-# Rybbit Web/JavaScript SDK (@rybbit/js)
+# Rybbit Web SDK (@rybbit/js)
 
-The official Web/JavaScript SDK for [Rybbit](https://github.com/rybbit-io/rybbit).
+The official Web SDK for [Rybbit](https://github.com/rybbit-io/rybbit).
 
 Docs: Placeholder
 
