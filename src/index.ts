@@ -10,15 +10,14 @@ const rybbit: RybbitAPI = {
   /**
    * Initializes the Rybbit SDK. Must be called before any other tracking methods.
    * @param config - Configuration object or the analyticsHost string.
-   * @param siteId - Required if the first argument is the analyticsHost string.
    */
-  init: (config: RybbitConfig | string, siteId?: string | number) => {
+  init: (config: RybbitConfig) => {
     if (isInitialized) {
       logError("Rybbit SDK already initialized. Call init() only once.");
       return;
     }
 
-    const initSuccess = initializeConfig(config, siteId);
+    const initSuccess = initializeConfig(config);
     if (!initSuccess) {
       return;
     }

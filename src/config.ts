@@ -31,26 +31,17 @@ export const currentConfig: Readonly<RybbitConfig> = new Proxy({} as RybbitConfi
 });
 
 
-export function initializeConfig(options: RybbitConfig | string, siteIdParam?: string | number): boolean {
+export function initializeConfig(options: RybbitConfig): boolean {
   if (internalConfig) {
     logError("Rybbit SDK already initialized.");
     return false;
   }
 
-  let userConfigInput: Partial<RybbitConfig>;
-
-  if (typeof options === "string") {
-    if (!siteIdParam) {
-      logError("`siteId` is required when providing `analyticsHost` as the first argument to init.");
-      return false;
-    }
-    userConfigInput = { analyticsHost: options, siteId: siteIdParam };
-  } else if (typeof options === "object" && options !== null) {
-    userConfigInput = options;
-  } else {
-    logError("Invalid configuration provided to rybbit.init(). Provide an object or (analyticsHost, siteId).");
+  if (typeof options !== "object" || options === null) {
+    logError("Invalid configuration provided to rybbit.init(). Expected an object.");
     return false;
   }
+  const userConfigInput = options;
 
   const analyticsHost = userConfigInput.analyticsHost;
   if (!analyticsHost) {
@@ -74,7 +65,6 @@ export function initializeConfig(options: RybbitConfig | string, siteIdParam?: s
   internalConfig = {
     analyticsHost: finalAnalyticsHost,
     siteId: finalSiteId,
-
     debounce: Math.max(0, userConfigInput.debounce ?? defaultConfig.debounce),
     autoTrackPageviews: userConfigInput.autoTrackPageviews ?? defaultConfig.autoTrackPageviews,
     autoTrackSpaRoutes: userConfigInput.autoTrackSpaRoutes ?? defaultConfig.autoTrackSpaRoutes,

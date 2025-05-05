@@ -39,7 +39,7 @@ export interface TrackPayload {
 }
 
 export interface RybbitAPI {
-  init: (config: RybbitConfig | string, siteId?: string | number) => void; // Allow init("host", "siteId") or init({ host, siteId, ... })
+  init: (config: RybbitConfig) => void;
   pageview: (path?: string) => void;
   event: (name: string, properties?: TrackProperties) => void;
   trackOutboundLink: (
