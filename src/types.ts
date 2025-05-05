@@ -48,9 +48,3 @@ export interface RybbitAPI {
     target?: string
   ) => void;
 }
-
-declare global {
-  interface Window {
-    rybbit?: RybbitAPI;
-  }
-}

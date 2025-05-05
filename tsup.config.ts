@@ -17,8 +17,7 @@ const banner = {
 export default defineConfig({
   entry: ["src/index.ts"],
   outDir: "dist",
-  format: ["cjs", "esm", "iife"],
-  globalName: "rybbit",
+  format: ["cjs", "esm"],
   target: "es2017",
   sourcemap: false,
   dts: true,
@@ -28,9 +27,5 @@ export default defineConfig({
   banner,
   define: {
     "process.env.SDK_VERSION": JSON.stringify(sdkVersion),
-  },
-  outExtension({ format }) {
-    if (format === "iife") return { js: ".global.js" };
-    return {};
   },
 });

@@ -1,4 +1,4 @@
-import { initializeConfig, readConfigFromScriptTag, currentConfig } from "./config";
+import { initializeConfig, currentConfig } from "./config";
 import { track } from "./core";
 import { setupAutoTracking, cleanupAutoTracking } from "./listeners";
 import { log, logError } from "./utils";
@@ -96,22 +96,5 @@ const rybbit: RybbitAPI = {
    */
   // cleanup: cleanupAutoTracking // Maybe expose later if needed
 };
-
-// --- Auto-initialization for <script> tag usage ---
-// Check if the script is loaded via a regular <script> tag
-// and if rybbit hasn"t been defined already (e.g., by an import)
-if (typeof window !== "undefined" && !window.rybbit) {
-  const scriptConfig = readConfigFromScriptTag();
-
-  if (scriptConfig.analyticsHost && scriptConfig.siteId) {
-    log("Attempting auto-initialization from script tag attributes.");
-    rybbit.init(scriptConfig as RybbitConfig);
-  } else {
-    // Make the API available, but require manual init
-    log("Rybbit loaded via script tag, but missing data-rybbit-host or data-site-id. Manual rybbit.init() required.");
-  }
-
-  window.rybbit = rybbit;
-}
 
 export default rybbit;
