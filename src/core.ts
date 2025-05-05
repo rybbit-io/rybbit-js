@@ -59,7 +59,7 @@ export function track(
     log("Sending track event:", payload);
 
     const data = JSON.stringify(payload);
-    const endpoint = `${currentConfig.analyticsHost}/track`;
+    const endpoint = `${currentConfig.analyticsHost}/api/track`;
 
     if (navigator.sendBeacon) {
       const sent = navigator.sendBeacon(endpoint, new Blob([data], { type: "application/json" }));
