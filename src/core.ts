@@ -6,8 +6,11 @@ let isTrackingPaused = false;
 
 export function track(
   eventType: EventType,
-  eventName?: string, // Optional: Only used for "custom_event"
-  properties: TrackProperties = {}
+  eventData: {
+    eventName?: string;
+    properties?: TrackProperties;
+    pathOverride?: string;
+  } = {}
 ): void {
   if (isTrackingPaused) {
     log("Tracking is paused.");
@@ -19,6 +22,8 @@ export function track(
     return;
   }
 
+  const { eventName, properties = {}, pathOverride } = eventData;
+
   if (eventType === "custom_event" && !eventName) {
     logError("Event name is required and must be a string for custom events.");
     return;
@@ -26,24 +31,47 @@ export function track(
 
   try {
     const url = new URL(window.location.href);
-    let pathname = url.pathname;
+    let pathForTracking: string;
+    let searchForTracking: string = ""; // Default query string
 
-    if (findMatchingPattern(pathname, currentConfig.skipPatterns)) {
-      log(`Skipping track for path: ${pathname}`);
+    if (eventType === "pageview" && typeof pathOverride === "string" && pathOverride.trim()) {
+      log(`Using path override: ${pathOverride}`);
+      // Check if override includes query params
+      try {
+        // Use a dummy base to parse the override path/query correctly
+        const overrideUrl = new URL(pathOverride, "http://dummybase");
+        pathForTracking = overrideUrl.pathname;
+        searchForTracking = overrideUrl.search || "";
+        log(`Parsed override path: ${pathForTracking}, search: ${searchForTracking}`);
+      } catch (e) {
+        logError(`Invalid pathOverride format: ${pathOverride}. Using window location.`);
+        pathForTracking = url.pathname;
+        searchForTracking = currentConfig.trackQuerystring ? url.search : "";
+      }
+    } else {
+      // Default behavior: use window location
+      pathForTracking = url.pathname;
+      searchForTracking = currentConfig.trackQuerystring ? url.search : "";
+    }
+
+    if (findMatchingPattern(pathForTracking, currentConfig.skipPatterns)) {
+      log(`Skipping track for path: ${pathForTracking}`);
       return;
     }
 
-    const maskMatch = findMatchingPattern(pathname, currentConfig.maskPatterns);
+    const maskMatch = findMatchingPattern(pathForTracking, currentConfig.maskPatterns);
     if (maskMatch) {
-      log(`Masking path ${pathname} as ${maskMatch}`);
-      pathname = maskMatch;
+      log(`Masking path ${pathForTracking} as ${maskMatch}`);
+      pathForTracking = maskMatch;
+      // When masking, clear the query string as it belongs to the original path
+      searchForTracking = "";
     }
 
     const payload: TrackPayload = {
       site_id: currentConfig.siteId,
       hostname: url.hostname,
-      pathname: pathname,
-      querystring: currentConfig.trackQuerystring ? url.search : "",
+      pathname: pathForTracking,
+      querystring: searchForTracking,
       screenWidth: window.innerWidth,
       screenHeight: window.innerHeight,
       language: navigator.language,
@@ -51,7 +79,7 @@ export function track(
       referrer: document.referrer || "direct",
       type: eventType,
       ...(eventType === "custom_event" && { event_name: eventName }),
-      ...((eventType === "custom_event" || eventType === "outbound") && {
+      ...((eventType === "custom_event" || eventType === "outbound") && Object.keys(properties).length > 0 && {
         properties: JSON.stringify(properties),
       }),
     };
@@ -59,7 +87,7 @@ export function track(
     log("Sending track event:", payload);
 
     const data = JSON.stringify(payload);
-    const endpoint = `${currentConfig.analyticsHost}/api/track`;
+    const endpoint = `${currentConfig.analyticsHost}/track`;
 
     if (navigator.sendBeacon) {
       const sent = navigator.sendBeacon(endpoint, new Blob([data], { type: "application/json" }));

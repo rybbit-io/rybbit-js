@@ -9,7 +9,7 @@ let isInitialized = false;
 const rybbit: RybbitAPI = {
   /**
    * Initializes the Rybbit SDK. Must be called before any other tracking methods.
-   * @param config - Configuration object or the analyticsHost string.
+   * @param config - Configuration object.
    */
   init: (config: RybbitConfig) => {
     if (isInitialized) {
@@ -32,26 +32,20 @@ const rybbit: RybbitAPI = {
   /**
    * Tracks a pageview event.
    * Automatically called on initial load and SPA navigation if autoTrackPageviews is enabled.
-   * Can be called manually for more control.
-   * @param path - Optional. Override the detected path. Useful for virtual pageviews.
+   * Can be called manually for more control or to override the path.
+   * @param path - Optional. Override the detected path (and query string). Useful for virtual pageviews.
    */
   pageview: (path?: string) => {
     if (!isInitialized) {
       logError("Rybbit SDK not initialized. Call rybbit.init() first.");
       return;
     }
-    // If a path override is provided, we might need to adjust the track function
-    // For now, just track the current state but log the intention.
-    // TODO: Enhance track() to accept path override if needed.
-    if (path) {
-      log(`Manual pageview called with path override: ${path} (override not yet implemented in core track)`);
-    }
-    track("pageview");
+    track("pageview", { pathOverride: path });
   },
 
   /**
    * Tracks a custom event.
-   * @param name - The name of the custom event (e.g., "signup", "button_click").
+   * @param name - The name of the custom event.
    * @param properties - Optional. An object containing additional data about the event.
    */
   event: (name: string, properties?: TrackProperties) => {
@@ -63,7 +57,7 @@ const rybbit: RybbitAPI = {
       logError("Event name is required and must be a string.");
       return;
     }
-    track("custom_event", name, properties);
+    track("custom_event", { eventName: name, properties: properties });
   },
 
   /**
@@ -71,7 +65,7 @@ const rybbit: RybbitAPI = {
    * Useful if automatic tracking is disabled or for links generated dynamically after load.
    * @param url - The destination URL of the link.
    * @param text - Optional. The text content of the link.
-   * @param target - Optional. The target attribute of the link (e.g., "_blank").
+   * @param target - Optional. The target attribute of the link.
    */
   trackOutboundLink: (
     url: string,
@@ -86,7 +80,7 @@ const rybbit: RybbitAPI = {
       logError("Outbound link URL is required and must be a string.");
       return;
     }
-    track("outbound", undefined, { url, text, target });
+    track("outbound", { properties: { url, text, target } });
   },
 
   /**
