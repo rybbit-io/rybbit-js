@@ -1,8 +1,8 @@
-# Rybbit Web SDK (@rybbit/js)
+# Rybbit JavaScript Web SDK
 
-The official Web SDK for [Rybbit](https://github.com/rybbit-io/rybbit).
+The official JavaScript Web SDK for [Rybbit](https://github.com/rybbit-io/rybbit).
 
-Docs: Placeholder
+For usage instructions, see the [docs](https://www.rybbit.io/docs/web).
 
 ## Installation
 
