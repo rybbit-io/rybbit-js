@@ -63,12 +63,12 @@ function handleOutboundLinkClick(event: MouseEvent): void {
 
   if (link && link.href && isOutboundLink(link.href)) {
     log("Outbound link clicked:", link.href);
-    const props: OutboundLinkProperties = {
+    const properties: OutboundLinkProperties = {
       url: link.href,
       text: link.innerText || link.textContent || "",
       target: link.target || "_self",
     };
-    track("outbound", undefined, props);
+    track("outbound", { properties });
   }
 }
 
