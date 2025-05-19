@@ -2,7 +2,7 @@
 
 The official JavaScript Web SDK for [Rybbit](https://github.com/rybbit-io/rybbit).
 
-For usage instructions, see the [docs](https://www.rybbit.io/docs/web).
+For usage instructions, see the [docs](https://www.rybbit.io/docs/sdks/web).
 
 ## Installation
 
