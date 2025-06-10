@@ -1,6 +1,7 @@
 import { initializeConfig, currentConfig } from "./config";
-import { track } from "./core";
+import { track, identify, clearUserId, getUserId, optOut, optIn, getOptOutStatus } from "./core";
 import { setupAutoTracking, cleanupAutoTracking } from "./listeners";
+import { initWebVitals } from "./webvitals";
 import { log, logError } from "./utils";
 import { RybbitConfig, RybbitAPI, TrackProperties } from "./types";
 
@@ -27,6 +28,7 @@ const rybbit: RybbitAPI = {
     log("Config:", { ...currentConfig });
 
     setupAutoTracking();
+    initWebVitals();
   },
 
   /**
@@ -81,6 +83,67 @@ const rybbit: RybbitAPI = {
       return;
     }
     track("outbound", { properties: { url, text, target } });
+  },
+
+  /**
+   * Identifies a user with a custom user ID.
+   * @param userId - The user ID to associate with tracking events.
+   */
+  identify: (userId: string) => {
+    if (!isInitialized) {
+      logError("Rybbit SDK not initialized. Call rybbit.init() first.");
+      return;
+    }
+    identify(userId);
+  },
+
+  /**
+   * Clears the current user ID.
+   */
+  clearUserId: () => {
+    if (!isInitialized) {
+      logError("Rybbit SDK not initialized. Call rybbit.init() first.");
+      return;
+    }
+    clearUserId();
+  },
+
+  /**
+   * Gets the current user ID.
+   * @returns The current user ID or null if not set.
+   */
+  getUserId: () => {
+    if (!isInitialized) {
+      logError("Rybbit SDK not initialized. Call rybbit.init() first.");
+      return null;
+    }
+    return getUserId();
+  },
+
+  /**
+   * Opts the user out of tracking.
+   */
+  optOut: () => {
+    optOut();
+  },
+
+  /**
+   * Opts the user back into tracking.
+   */
+  optIn: () => {
+    if (!isInitialized) {
+      logError("Rybbit SDK not initialized. Call rybbit.init() first.");
+      return;
+    }
+    optIn();
+  },
+
+  /**
+   * Checks if the user is currently opted out of tracking.
+   * @returns True if opted out, false otherwise.
+   */
+  isOptedOut: () => {
+    return getOptOutStatus();
   },
 
   /**
