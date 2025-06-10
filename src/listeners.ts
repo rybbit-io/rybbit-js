@@ -43,36 +43,58 @@ export function setupAutoTracking(): void {
     };
 
     window.addEventListener("popstate", pageviewTracker);
-
-    if (currentConfig.trackHashRoutes) {
-      window.addEventListener("hashchange", pageviewTracker);
-    }
+    window.addEventListener("hashchange", pageviewTracker);
   } else {
     log("SPA route change tracking is disabled.");
-  }
-
-  if (currentConfig.trackOutboundLinks) {
-    log("Setting up outbound link tracking.");
-    document.addEventListener("click", handleOutboundLinkClick, true);
-  } else {
-    log("Outbound link tracking is disabled.");
   }
 
   isAutoTrackingSetup = true;
 }
 
-function handleOutboundLinkClick(event: MouseEvent): void {
-  const target = event.target as Element;
-  const link = target.closest("a");
+export function setupDataAttributeTracking(): void {
+  if (!currentConfig.trackDataAttributes) {
+    log("Data attribute tracking is disabled.");
+    return;
+  }
 
-  if (link && link.href && isOutboundLink(link.href)) {
-    log("Outbound link clicked:", link.href);
-    const properties: OutboundLinkProperties = {
-      url: link.href,
-      text: link.innerText || link.textContent || "",
-      target: link.target || "_self",
-    };
-    track("outbound", { properties });
+  log("Setting up data attribute and outbound link tracking.");
+  document.addEventListener("click", handleClick, true);
+}
+
+function handleClick(event: MouseEvent): void {
+  const target = event.target as Element;
+
+  let element = target as Element | null;
+  while (element) {
+    if (element.hasAttribute("data-rybbit-event")) {
+      const eventName = element.getAttribute("data-rybbit-event");
+      if (eventName) {
+        const properties: Record<string, string> = {};
+        for (const attr of element.attributes) {
+          if (attr.name.startsWith("data-rybbit-prop-")) {
+            const propName = attr.name.replace("data-rybbit-prop-", "");
+            properties[propName] = attr.value;
+          }
+        }
+        log("Data attribute event triggered:", eventName, properties);
+        track("custom_event", { eventName, properties });
+      }
+      break;
+    }
+    element = element.parentElement;
+  }
+
+  if (currentConfig.trackOutboundLinks) {
+    const link = target.closest("a");
+    if (link && link.href && isOutboundLink(link.href)) {
+      log("Outbound link clicked:", link.href);
+      const properties: OutboundLinkProperties = {
+        url: link.href,
+        text: link.innerText || link.textContent || "",
+        target: link.target || "_self",
+      };
+      track("outbound", { properties });
+    }
   }
 }
 
@@ -83,15 +105,10 @@ export function cleanupAutoTracking(): void {
 
   if (currentConfig.autoTrackSpaRoutes) {
     window.removeEventListener("popstate", pageviewTracker);
-
-    if (currentConfig.trackHashRoutes) {
-      window.removeEventListener("hashchange", pageviewTracker);
-    }
+    window.removeEventListener("hashchange", pageviewTracker);
   }
 
-  if (currentConfig.trackOutboundLinks) {
-    document.removeEventListener("click", handleOutboundLinkClick, true);
-  }
+  document.removeEventListener("click", handleClick, true);
 
   isAutoTrackingSetup = false;
 }
