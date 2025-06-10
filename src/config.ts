@@ -7,6 +7,9 @@ const defaultConfig: Required<Omit<RybbitConfig, "analyticsHost" | "siteId">> = 
   autoTrackSpaRoutes: true,
   trackQuerystring: true,
   trackOutboundLinks: true,
+  trackHashRoutes: true,
+  trackWebVitals: true,
+  webVitalsTimeout: 20000,
   skipPatterns: [],
   maskPatterns: [],
   debug: false,
@@ -29,7 +32,6 @@ export const currentConfig: Readonly<RybbitConfig> = new Proxy({} as RybbitConfi
     return false;
   }
 });
-
 
 export function initializeConfig(options: RybbitConfig): boolean {
   if (internalConfig) {
@@ -70,9 +72,12 @@ export function initializeConfig(options: RybbitConfig): boolean {
     autoTrackSpaRoutes: userConfigInput.autoTrackSpaRoutes ?? defaultConfig.autoTrackSpaRoutes,
     trackQuerystring: userConfigInput.trackQuerystring ?? defaultConfig.trackQuerystring,
     trackOutboundLinks: userConfigInput.trackOutboundLinks ?? defaultConfig.trackOutboundLinks,
-    debug: userConfigInput.debug ?? defaultConfig.debug,
+    trackHashRoutes: userConfigInput.trackHashRoutes ?? defaultConfig.trackHashRoutes,
+    trackWebVitals: userConfigInput.trackWebVitals ?? defaultConfig.trackWebVitals,
+    webVitalsTimeout: Math.max(1000, userConfigInput.webVitalsTimeout ?? defaultConfig.webVitalsTimeout),
     skipPatterns: validatedSkipPatterns,
     maskPatterns: validatedMaskPatterns,
+    debug: userConfigInput.debug ?? defaultConfig.debug,
   };
 
   return true;
