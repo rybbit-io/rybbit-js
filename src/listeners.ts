@@ -43,6 +43,10 @@ export function setupAutoTracking(): void {
     };
 
     window.addEventListener("popstate", pageviewTracker);
+
+    if (currentConfig.trackHashRoutes) {
+      window.addEventListener("hashchange", pageviewTracker);
+    }
   } else {
     log("SPA route change tracking is disabled.");
   }
@@ -79,6 +83,10 @@ export function cleanupAutoTracking(): void {
 
   if (currentConfig.autoTrackSpaRoutes) {
     window.removeEventListener("popstate", pageviewTracker);
+
+    if (currentConfig.trackHashRoutes) {
+      window.removeEventListener("hashchange", pageviewTracker);
+    }
   }
 
   if (currentConfig.trackOutboundLinks) {
