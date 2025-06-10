@@ -62,9 +62,11 @@ export function setupDataAttributeTracking(): void {
 }
 
 function handleClick(event: MouseEvent): void {
-  const target = event.target as Element;
+  if (!(event.target instanceof Element)) {
+    return;
+  }
 
-  let element = target as Element | null;
+  let element: Element | null = event.target;
   while (element) {
     if (element.hasAttribute("data-rybbit-event")) {
       const eventName = element.getAttribute("data-rybbit-event");
@@ -84,8 +86,8 @@ function handleClick(event: MouseEvent): void {
     element = element.parentElement;
   }
 
-  if (currentConfig.trackOutboundLinks) {
-    const link = target.closest("a");
+  if (currentConfig.trackOutboundLinks && event.target instanceof Element) {
+    const link = event.target.closest("a");
     if (link && link.href && isOutboundLink(link.href)) {
       log("Outbound link clicked:", link.href);
       const properties: OutboundLinkProperties = {
