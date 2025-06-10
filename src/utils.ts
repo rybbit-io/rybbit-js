@@ -98,8 +98,7 @@ export function getCurrentPathname(): string {
   const url = new URL(window.location.href);
   let pathname = url.pathname;
 
-  // Handle hash-based SPA routing
-  if (currentConfig.trackHashRoutes && url.hash && url.hash.startsWith("#/")) {
+  if (url.hash && url.hash.startsWith("#/")) {
     pathname = url.hash.substring(1);
   }
 
