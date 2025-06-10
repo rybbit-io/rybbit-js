@@ -1,8 +1,28 @@
 import { currentConfig } from "./config";
-import { findMatchingPattern, log, logError } from "./utils";
+import { findMatchingPattern, log, logError, getCurrentPathname } from "./utils";
 import { EventType, TrackPayload, TrackProperties } from "./types";
 
 let isTrackingPaused = false;
+let customUserId: string | null = null;
+let isOptedOut = false;
+
+try {
+  const storedUserId = localStorage.getItem("rybbit-user-id");
+  if (storedUserId) {
+    customUserId = storedUserId;
+  }
+
+  const optOutStatus = localStorage.getItem("disable-rybbit");
+  if (optOutStatus !== null) {
+    isOptedOut = true;
+  }
+} catch (e) {
+  // localStorage not available, ignore
+}
+
+if (typeof window !== "undefined" && (window as any).__RYBBIT_OPTOUT__) {
+  isOptedOut = true;
+}
 
 export function track(
   eventType: EventType,
@@ -12,8 +32,8 @@ export function track(
     pathOverride?: string;
   } = {}
 ): void {
-  if (isTrackingPaused) {
-    log("Tracking is paused.");
+  if (isTrackingPaused || isOptedOut) {
+    log("Tracking is paused or opted out.");
     return;
   }
 
@@ -45,12 +65,12 @@ export function track(
         log(`Parsed override path: ${pathForTracking}, search: ${searchForTracking}`);
       } catch (e) {
         logError(`Invalid pathOverride format: ${pathOverride}. Using window location.`);
-        pathForTracking = url.pathname;
+        pathForTracking = getCurrentPathname();
         searchForTracking = currentConfig.trackQuerystring ? url.search : "";
       }
     } else {
-      // Default behavior: use window location
-      pathForTracking = url.pathname;
+      // Default behavior: use current pathname (with hash support)
+      pathForTracking = getCurrentPathname();
       searchForTracking = currentConfig.trackQuerystring ? url.search : "";
     }
 
@@ -79,9 +99,11 @@ export function track(
       referrer: document.referrer || "direct",
       type: eventType,
       ...(eventType === "custom_event" && { event_name: eventName }),
+      ...(eventType === "performance" && { event_name: eventName }),
       ...((eventType === "custom_event" || eventType === "outbound") && Object.keys(properties).length > 0 && {
         properties: JSON.stringify(properties),
       }),
+      ...(customUserId && { user_id: customUserId }),
     };
 
     log("Sending track event:", payload);
@@ -126,4 +148,56 @@ export function pauseTracking(): void {
 export function resumeTracking(): void {
   isTrackingPaused = false;
   log("Tracking resumed.");
+}
+
+export function identify(userId: string): void {
+  if (userId.trim() === "") {
+    logError("User ID must be a non-empty string");
+    return;
+  }
+  customUserId = userId.trim();
+  try {
+    localStorage.setItem("rybbit-user-id", customUserId);
+    log("User identified:", customUserId);
+  } catch (e) {
+    logError("Could not persist user ID to localStorage");
+  }
+}
+
+export function clearUserId(): void {
+  customUserId = null;
+  try {
+    localStorage.removeItem("rybbit-user-id");
+    log("User ID cleared");
+  } catch (e) {
+    // localStorage not available, ignore
+  }
+}
+
+export function getUserId(): string | null {
+  return customUserId;
+}
+
+export function optOut(): void {
+  isOptedOut = true;
+  try {
+    localStorage.setItem("disable-rybbit", "true");
+    log("Opted out of tracking");
+  } catch (e) {
+    logError("Could not persist opt-out status to localStorage");
+  }
+}
+
+export function optIn(): void {
+  isOptedOut = false;
+  try {
+    localStorage.removeItem("disable-rybbit");
+    log("Opted back into tracking");
+  } catch (e) {
+    // localStorage not available, ignore
+  }
+}
+
+export function getOptOutStatus(): boolean {
+  return isOptedOut;
 }
