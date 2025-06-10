@@ -1,6 +1,6 @@
 import { initializeConfig, currentConfig } from "./config";
 import { track, identify, clearUserId, getUserId, optOut, optIn, getOptOutStatus } from "./core";
-import { setupAutoTracking, cleanupAutoTracking } from "./listeners";
+import { setupAutoTracking, cleanupAutoTracking, setupDataAttributeTracking } from "./listeners";
 import { initWebVitals } from "./webvitals";
 import { log, logError } from "./utils";
 import { RybbitConfig, RybbitAPI, TrackProperties } from "./types";
@@ -28,6 +28,7 @@ const rybbit: RybbitAPI = {
     log("Config:", { ...currentConfig });
 
     setupAutoTracking();
+    setupDataAttributeTracking();
     initWebVitals();
   },
 
@@ -84,6 +85,14 @@ const rybbit: RybbitAPI = {
     }
     track("outbound", { properties: { url, text, target } });
   },
+
+  // trackOutbound: (
+  //   url: string,
+  //   text: string = "",
+  //   target: string = "_self"
+  // ) => {
+  //   rybbit.trackOutboundLink(url, text, target);
+  // },
 
   /**
    * Identifies a user with a custom user ID.
@@ -150,7 +159,7 @@ const rybbit: RybbitAPI = {
    * Cleans up event listeners set up by the SDK. Useful in SPA environments
    * where the SDK might be re-initialized or removed.
    */
-  // cleanup: cleanupAutoTracking // Maybe expose later if needed
+  cleanup: cleanupAutoTracking
 };
 
 export default rybbit;
