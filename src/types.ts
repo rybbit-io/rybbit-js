@@ -7,6 +7,7 @@ export interface RybbitConfig {
   trackQuerystring?: boolean;
   trackOutboundLinks?: boolean;
   trackHashRoutes?: boolean;
+  trackDataAttributes?: boolean;
   trackWebVitals?: boolean;
   webVitalsTimeout?: number;
   skipPatterns?: string[];
@@ -61,10 +62,12 @@ export interface RybbitAPI {
   pageview: (path?: string) => void;
   event: (name: string, properties?: TrackProperties) => void;
   trackOutboundLink: (url: string, text?: string, target?: string) => void;
+  // trackOutbound: (url: string, text?: string, target?: string) => void; // Alias for script compatibility
   identify: (userId: string) => void;
   clearUserId: () => void;
   getUserId: () => string | null;
   optOut: () => void;
   optIn: () => void;
   isOptedOut: () => boolean;
+  cleanup: () => void;
 }
