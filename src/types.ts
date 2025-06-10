@@ -6,12 +6,15 @@ export interface RybbitConfig {
   autoTrackSpaRoutes?: boolean;
   trackQuerystring?: boolean;
   trackOutboundLinks?: boolean;
+  trackHashRoutes?: boolean;
+  trackWebVitals?: boolean;
+  webVitalsTimeout?: number;
   skipPatterns?: string[];
   maskPatterns?: string[];
   debug?: boolean;
 }
 
-export type EventType = "pageview" | "custom_event" | "outbound";
+export type EventType = "pageview" | "custom_event" | "outbound" | "performance";
 
 export interface TrackProperties {
   [key: string]: any;
@@ -21,6 +24,14 @@ export interface OutboundLinkProperties extends TrackProperties {
   url: string;
   text: string;
   target: string;
+}
+
+export interface WebVitalsData {
+  lcp: number | null;
+  cls: number | null;
+  inp: number | null;
+  fcp: number | null;
+  ttfb: number | null;
 }
 
 export interface TrackPayload {
@@ -34,17 +45,26 @@ export interface TrackPayload {
   page_title: string;
   referrer: string;
   type: EventType;
-  event_name?: string; // Only for custom_event
+  event_name?: string; // Only for custom_event and performance
   properties?: string; // JSON stringified for custom_event and outbound
+  user_id?: string;
+  // Web vitals properties
+  lcp?: number | null;
+  cls?: number | null;
+  inp?: number | null;
+  fcp?: number | null;
+  ttfb?: number | null;
 }
 
 export interface RybbitAPI {
   init: (config: RybbitConfig) => void;
   pageview: (path?: string) => void;
   event: (name: string, properties?: TrackProperties) => void;
-  trackOutboundLink: (
-    url: string,
-    text?: string,
-    target?: string
-  ) => void;
+  trackOutboundLink: (url: string, text?: string, target?: string) => void;
+  identify: (userId: string) => void;
+  clearUserId: () => void;
+  getUserId: () => string | null;
+  optOut: () => void;
+  optIn: () => void;
+  isOptedOut: () => boolean;
 }
