@@ -69,3 +69,39 @@ export function log(...args: any[]): void {
 export function logError(...args: any[]): void {
   console.error("[Rybbit Error]", ...args);
 }
+
+export function getStorageItem(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch (e) {
+    return null;
+  }
+}
+
+export function setStorageItem(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value);
+  } catch (e) {
+    // localStorage not available, ignore
+  }
+}
+
+export function removeStorageItem(key: string): void {
+  try {
+    localStorage.removeItem(key);
+  } catch (e) {
+    // localStorage not available, ignore
+  }
+}
+
+export function getCurrentPathname(): string {
+  const url = new URL(window.location.href);
+  let pathname = url.pathname;
+
+  // Handle hash-based SPA routing
+  if (currentConfig.trackHashRoutes && url.hash && url.hash.startsWith("#/")) {
+    pathname = url.hash.substring(1);
+  }
+
+  return pathname;
+}
