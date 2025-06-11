@@ -61,8 +61,7 @@ export interface RybbitAPI {
   init: (config: RybbitConfig) => void;
   pageview: (path?: string) => void;
   event: (name: string, properties?: TrackProperties) => void;
-  trackOutboundLink: (url: string, text?: string, target?: string) => void;
-  // trackOutbound: (url: string, text?: string, target?: string) => void; // Alias for script compatibility
+  outbound: (url: string, text?: string, target?: string) => void;
   identify: (userId: string) => void;
   clearUserId: () => void;
   getUserId: () => string | null;

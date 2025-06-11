@@ -70,7 +70,7 @@ const rybbit: RybbitAPI = {
    * @param text - Optional. The text content of the link.
    * @param target - Optional. The target attribute of the link.
    */
-  trackOutboundLink: (
+  outbound: (
     url: string,
     text: string = "",
     target: string = "_self"
@@ -85,14 +85,6 @@ const rybbit: RybbitAPI = {
     }
     track("outbound", { properties: { url, text, target } });
   },
-
-  // trackOutbound: (
-  //   url: string,
-  //   text: string = "",
-  //   target: string = "_self"
-  // ) => {
-  //   rybbit.trackOutboundLink(url, text, target);
-  // },
 
   /**
    * Identifies a user with a custom user ID.
