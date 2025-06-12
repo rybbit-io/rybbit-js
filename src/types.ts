@@ -17,8 +17,10 @@ export interface RybbitConfig {
 
 export type EventType = "pageview" | "custom_event" | "outbound" | "performance";
 
+export type PropertyValue = string | number | boolean;
+
 export interface TrackProperties {
-  [key: string]: any;
+  [key: string]: PropertyValue | PropertyValue[];
 }
 
 export interface OutboundLinkProperties extends TrackProperties {
