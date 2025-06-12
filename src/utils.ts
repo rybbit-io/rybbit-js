@@ -67,7 +67,9 @@ export function log(...args: any[]): void {
 }
 
 export function logError(...args: any[]): void {
-  console.error("[Rybbit Error]", ...args);
+  if (currentConfig.debug) {
+    console.error("[Rybbit Error]", ...args);
+  }
 }
 
 export function getCurrentPathname(): string {

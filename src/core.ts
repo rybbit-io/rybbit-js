@@ -44,8 +44,8 @@ export function track(
 
   const { eventName, properties, pathOverride, webVitals } = eventData;
 
-  if (eventType === "custom_event" && !eventName) {
-    logError("Event name is required and must be a string for custom events.");
+  if ((eventType === "custom_event" || eventType === "performance") && !eventName) {
+    logError("Event name is required and must be a string for performance or custom events.");
     return;
   }
 
