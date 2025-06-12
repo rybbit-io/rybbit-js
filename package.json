@@ -38,6 +38,7 @@
   "devDependencies": {
     "@types/node": "^22.14.1",
     "tsup": "^8.5.0",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "web-vitals": "^5.0.3"
   }
 }
