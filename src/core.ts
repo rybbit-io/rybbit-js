@@ -2,7 +2,6 @@ import { currentConfig } from "./config";
 import { findMatchingPattern, log, logError, getCurrentPathname } from "./utils";
 import { EventType, TrackPayload, TrackProperties, WebVitalsData } from "./types";
 
-let isTrackingPaused = false;
 let customUserId: string | null = null;
 let isOptedOut = false;
 
@@ -33,8 +32,8 @@ export function track(
     webVitals?: WebVitalsData;
   } = {}
 ): void {
-  if (isTrackingPaused || isOptedOut) {
-    log("Tracking is paused or opted out.");
+  if (isOptedOut) {
+    log("Opted out of tracking.");
     return;
   }
 
@@ -139,16 +138,6 @@ function sendWithFetch(endpoint: string, data: string): void {
   }).catch(error => {
     logError("Fetch request failed:", error);
   });
-}
-
-export function pauseTracking(): void {
-  isTrackingPaused = true;
-  log("Tracking paused.");
-}
-
-export function resumeTracking(): void {
-  isTrackingPaused = false;
-  log("Tracking resumed.");
 }
 
 export function identify(userId: string): void {
