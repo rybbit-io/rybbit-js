@@ -30,11 +30,11 @@ export interface OutboundLinkProperties extends TrackProperties {
 }
 
 export interface WebVitalsData {
-  lcp: number | null;
-  cls: number | null;
-  inp: number | null;
-  fcp: number | null;
-  ttfb: number | null;
+  lcp?: number | null;
+  cls?: number | null;
+  inp?: number | null;
+  fcp?: number | null;
+  ttfb?: number | null;
 }
 
 export interface TrackPayload extends WebVitalsData {
