@@ -25,7 +25,6 @@ const rybbit: RybbitAPI = {
     }
 
     isInitialized = true;
-    log(`SDK Initialized. Version: ${process.env.SDK_VERSION || "dev"}`);
     log("Config:", { ...currentConfig });
 
     setupAutoTracking();

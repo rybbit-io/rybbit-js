@@ -25,7 +25,4 @@ export default defineConfig({
   clean: true,
   minify: true,
   banner,
-  define: {
-    "process.env.SDK_VERSION": JSON.stringify(sdkVersion),
-  },
 });
