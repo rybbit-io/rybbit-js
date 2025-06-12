@@ -57,48 +57,10 @@ function sendWebVitals(): void {
 
   log("Sending web vitals data:", webVitalsData);
 
-  const payload = {
-    site_id: currentConfig.siteId,
-    hostname: window.location.hostname,
-    pathname: window.location.pathname,
-    querystring: currentConfig.trackQuerystring ? window.location.search : "",
-    screenWidth: window.innerWidth,
-    screenHeight: window.innerHeight,
-    language: navigator.language,
-    page_title: document.title,
-    referrer: document.referrer || "direct",
-    type: "performance" as const,
-    event_name: "web-vitals",
-    lcp: webVitalsData.lcp,
-    cls: webVitalsData.cls,
-    inp: webVitalsData.inp,
-    fcp: webVitalsData.fcp,
-    ttfb: webVitalsData.ttfb,
-  };
-
-  const data = JSON.stringify(payload);
-  const endpoint = `${currentConfig.analyticsHost}/track`;
-
-  if (navigator.sendBeacon) {
-    const sent = navigator.sendBeacon(endpoint, new Blob([data], { type: "application/json" }));
-    if (!sent) {
-      fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: data,
-        mode: "cors",
-        keepalive: true,
-      }).catch(error => logError("Failed to send web vitals:", error));
-    }
-  } else {
-    fetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: data,
-      mode: "cors",
-      keepalive: true,
-    }).catch(error => logError("Failed to send web vitals:", error));
-  }
+  track("performance", {
+    eventName: "web-vitals",
+    webVitals: webVitalsData,
+  });
 }
 
 function collectMetric(metric: any): void {

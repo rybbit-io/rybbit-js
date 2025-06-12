@@ -1,6 +1,6 @@
 import { currentConfig } from "./config";
 import { findMatchingPattern, log, logError, getCurrentPathname } from "./utils";
-import { EventType, TrackPayload, TrackProperties } from "./types";
+import { EventType, TrackPayload, TrackProperties, WebVitalsData } from "./types";
 
 let isTrackingPaused = false;
 let customUserId: string | null = null;
@@ -30,6 +30,7 @@ export function track(
     eventName?: string;
     properties?: TrackProperties;
     pathOverride?: string;
+    webVitals?: WebVitalsData;
   } = {}
 ): void {
   if (isTrackingPaused || isOptedOut) {
@@ -42,7 +43,7 @@ export function track(
     return;
   }
 
-  const { eventName, properties = {}, pathOverride } = eventData;
+  const { eventName, properties, pathOverride, webVitals } = eventData;
 
   if (eventType === "custom_event" && !eventName) {
     logError("Event name is required and must be a string for custom events.");
@@ -69,18 +70,18 @@ export function track(
         searchForTracking = currentConfig.trackQuerystring ? url.search : "";
       }
     } else {
-      // Default behavior: use current pathname (with hash support)
+      // Default behavior
       pathForTracking = getCurrentPathname();
       searchForTracking = currentConfig.trackQuerystring ? url.search : "";
     }
 
-    if (findMatchingPattern(pathForTracking, currentConfig.skipPatterns)) {
+    if (eventType !== "performance" && findMatchingPattern(pathForTracking, currentConfig.skipPatterns)) {
       log(`Skipping track for path: ${pathForTracking}`);
       return;
     }
 
     const maskMatch = findMatchingPattern(pathForTracking, currentConfig.maskPatterns);
-    if (maskMatch) {
+    if (maskMatch && eventType !== "performance") {
       log(`Masking path ${pathForTracking} as ${maskMatch}`);
       pathForTracking = maskMatch;
       // When masking, clear the query string as it belongs to the original path
@@ -98,11 +99,11 @@ export function track(
       page_title: document.title,
       referrer: document.referrer || "direct",
       type: eventType,
-      ...(eventType === "custom_event" && { event_name: eventName }),
-      ...(eventType === "performance" && { event_name: eventName }),
-      ...((eventType === "custom_event" || eventType === "outbound") && Object.keys(properties).length > 0 && {
+      ...((eventType === "custom_event" || eventType === "performance") && { event_name: eventName }),
+      ...((eventType === "custom_event" || eventType === "outbound") && Object.keys(properties ?? {}).length > 0 && {
         properties: JSON.stringify(properties),
       }),
+      ...(eventType === "performance" && webVitals && { ...webVitals }),
       ...(customUserId && { user_id: customUserId }),
     };
 
