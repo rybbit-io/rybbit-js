@@ -37,7 +37,7 @@ export interface WebVitalsData {
   ttfb: number | null;
 }
 
-export interface TrackPayload {
+export interface TrackPayload extends WebVitalsData {
   site_id: string | number;
   hostname: string;
   pathname: string;
@@ -51,11 +51,6 @@ export interface TrackPayload {
   event_name?: string; // Only for custom_event and performance
   properties?: string; // JSON stringified for custom_event and outbound
   user_id?: string;
-  lcp?: number | null;
-  cls?: number | null;
-  inp?: number | null;
-  fcp?: number | null;
-  ttfb?: number | null;
 }
 
 export interface RybbitAPI {
