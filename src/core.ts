@@ -167,27 +167,3 @@ export function clearUserId(): void {
 export function getUserId(): string | null {
   return customUserId;
 }
-
-export function optOut(): void {
-  isOptedOut = true;
-  try {
-    localStorage.setItem("disable-rybbit", "true");
-    log("Opted out of tracking");
-  } catch (e) {
-    logError("Could not persist opt-out status to localStorage");
-  }
-}
-
-export function optIn(): void {
-  isOptedOut = false;
-  try {
-    localStorage.removeItem("disable-rybbit");
-    log("Opted back into tracking");
-  } catch (e) {
-    // localStorage not available, ignore
-  }
-}
-
-export function getOptOutStatus(): boolean {
-  return isOptedOut;
-}

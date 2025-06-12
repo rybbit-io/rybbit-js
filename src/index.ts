@@ -1,5 +1,5 @@
 import { initializeConfig, currentConfig } from "./config";
-import { track, identify, clearUserId, getUserId, optOut, optIn, getOptOutStatus } from "./core";
+import { track, identify, clearUserId, getUserId } from "./core";
 import { setupAutoTracking, cleanupAutoTracking, setupDataAttributeTracking } from "./listeners";
 import { initWebVitals } from "./webvitals";
 import { log, logError } from "./utils";
@@ -119,32 +119,6 @@ const rybbit: RybbitAPI = {
       return null;
     }
     return getUserId();
-  },
-
-  /**
-   * Opts the user out of tracking.
-   */
-  optOut: () => {
-    optOut();
-  },
-
-  /**
-   * Opts the user back into tracking.
-   */
-  optIn: () => {
-    if (!isInitialized) {
-      logError("Rybbit SDK not initialized. Call rybbit.init() first.");
-      return;
-    }
-    optIn();
-  },
-
-  /**
-   * Checks if the user is currently opted out of tracking.
-   * @returns True if opted out, false otherwise.
-   */
-  isOptedOut: () => {
-    return getOptOutStatus();
   },
 
   /**

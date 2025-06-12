@@ -65,8 +65,5 @@ export interface RybbitAPI {
   identify: (userId: string) => void;
   clearUserId: () => void;
   getUserId: () => string | null;
-  optOut: () => void;
-  optIn: () => void;
-  isOptedOut: () => boolean;
   cleanup: () => void;
 }
