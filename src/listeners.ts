@@ -43,9 +43,14 @@ export function setupAutoTracking(): void {
     };
 
     window.addEventListener("popstate", pageviewTracker);
-    window.addEventListener("hashchange", pageviewTracker);
   } else {
     log("SPA route change tracking is disabled.");
+  }
+
+  if (currentConfig.trackHashRoutes) {
+    window.addEventListener("hashchange", pageviewTracker);
+  } else {
+    log("Hash route tracking is disabled.");
   }
 
   isAutoTrackingSetup = true;
@@ -105,11 +110,8 @@ export function cleanupAutoTracking(): void {
 
   log("Cleaning up automatic tracking listeners.");
 
-  if (currentConfig.autoTrackSpaRoutes) {
-    window.removeEventListener("popstate", pageviewTracker);
-    window.removeEventListener("hashchange", pageviewTracker);
-  }
-
+  window.removeEventListener("popstate", pageviewTracker);
+  window.removeEventListener("hashchange", pageviewTracker);
   document.removeEventListener("click", handleClick, true);
 
   isAutoTrackingSetup = false;

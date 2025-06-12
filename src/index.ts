@@ -10,6 +10,7 @@ let isInitialized = false;
 const rybbit: RybbitAPI = {
   /**
    * Initializes the Rybbit SDK. Must be called before any other tracking methods.
+   *
    * @param config - Configuration object.
    */
   init: (config: RybbitConfig) => {
@@ -34,8 +35,10 @@ const rybbit: RybbitAPI = {
 
   /**
    * Tracks a pageview event.
+   *
    * Automatically called on initial load and SPA navigation if autoTrackPageviews is enabled.
    * Can be called manually for more control or to override the path.
+   *
    * @param path - Optional. Override the detected path (and query string). Useful for virtual pageviews.
    */
   pageview: (path?: string) => {
@@ -48,6 +51,7 @@ const rybbit: RybbitAPI = {
 
   /**
    * Tracks a custom event.
+   *
    * @param name - The name of the custom event.
    * @param properties - Optional. An object containing additional data about the event.
    */
@@ -65,7 +69,9 @@ const rybbit: RybbitAPI = {
 
   /**
    * Manually tracks an outbound link click.
+   *
    * Useful if automatic tracking is disabled or for links generated dynamically after load.
+   *
    * @param url - The destination URL of the link.
    * @param text - Optional. The text content of the link.
    * @param target - Optional. The target attribute of the link.
@@ -88,6 +94,7 @@ const rybbit: RybbitAPI = {
 
   /**
    * Identifies a user with a custom user ID.
+   *
    * @param userId - The user ID to associate with tracking events.
    */
   identify: (userId: string) => {
@@ -111,6 +118,7 @@ const rybbit: RybbitAPI = {
 
   /**
    * Gets the current user ID.
+   *
    * @returns The current user ID or null if not set.
    */
   getUserId: () => {
@@ -122,8 +130,9 @@ const rybbit: RybbitAPI = {
   },
 
   /**
-   * Cleans up event listeners set up by the SDK. Useful in SPA environments
-   * where the SDK might be re-initialized or removed.
+   * Cleans up event listeners set up by the SDK.
+   *
+   * Useful in SPA environments where the SDK might be re-initialized or removed.
    */
   cleanup: cleanupAutoTracking
 };

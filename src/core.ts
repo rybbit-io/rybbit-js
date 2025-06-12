@@ -1,5 +1,5 @@
 import { currentConfig } from "./config";
-import { findMatchingPattern, log, logError, getCurrentPathname } from "./utils";
+import { findMatchingPattern, log, logError, getPathname } from "./utils";
 import { EventType, TrackPayload, TrackProperties, WebVitalsData } from "./types";
 
 let customUserId: string | null = null;
@@ -16,7 +16,7 @@ try {
     isOptedOut = true;
   }
 } catch (e) {
-  // localStorage not available, ignore
+  logError("localStorage unavailable");
 }
 
 if (typeof window !== "undefined" && (window as any).__RYBBIT_OPTOUT__) {
@@ -65,12 +65,12 @@ export function track(
         log(`Parsed override path: ${pathForTracking}, search: ${searchForTracking}`);
       } catch (e) {
         logError(`Invalid pathOverride format: ${pathOverride}. Using window location.`);
-        pathForTracking = getCurrentPathname();
+        pathForTracking = getPathname();
         searchForTracking = currentConfig.trackQuerystring ? url.search : "";
       }
     } else {
       // Default behavior
-      pathForTracking = getCurrentPathname();
+      pathForTracking = getPathname();
       searchForTracking = currentConfig.trackQuerystring ? url.search : "";
     }
 
@@ -160,7 +160,7 @@ export function clearUserId(): void {
     localStorage.removeItem("rybbit-user-id");
     log("User ID cleared");
   } catch (e) {
-    // localStorage not available, ignore
+    logError("Could not remove user ID from localStorage");
   }
 }
 

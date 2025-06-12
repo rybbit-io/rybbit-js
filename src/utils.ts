@@ -72,12 +72,12 @@ export function logError(...args: any[]): void {
   }
 }
 
-export function getCurrentPathname(): string {
+export function getPathname(): string {
   const url = new URL(window.location.href);
   let pathname = url.pathname;
 
-  if (url.hash && url.hash.startsWith("#/")) {
-    pathname = url.hash.substring(1);
+  if (currentConfig.trackHashRoutes && url.hash) {
+    pathname += url.hash;
   }
 
   return pathname;
