@@ -47,18 +47,17 @@ export function initializeConfig(options: RybbitConfig): boolean {
   const userConfigInput = options;
 
   const analyticsHost = userConfigInput.analyticsHost;
-  if (!analyticsHost) {
-    logError("`analyticsHost` is required in Rybbit config and must be a string.");
+  if (analyticsHost.trim() === "") {
+    logError("`analyticsHost` is required in Rybbit config and must be a non-empty string.");
     return false;
   }
   const finalAnalyticsHost = analyticsHost.replace(/\/$/, "");
 
   const siteId = userConfigInput.siteId;
-  if (siteId === undefined || siteId === null || String(siteId).trim() === "") {
-    logError("`siteId` is required in Rybbit config and must be a non-empty string or number.");
+  if (siteId.trim() === "") {
+    logError("`siteId` is required in Rybbit config and must be a non-empty string.");
     return false;
   }
-  const finalSiteId = String(siteId);
 
   const validatedSkipPatterns = (Array.isArray(userConfigInput.skipPatterns)
     ? userConfigInput.skipPatterns : defaultConfig.skipPatterns);
@@ -67,7 +66,7 @@ export function initializeConfig(options: RybbitConfig): boolean {
 
   internalConfig = {
     analyticsHost: finalAnalyticsHost,
-    siteId: finalSiteId,
+    siteId: siteId,
     debounce: Math.max(0, userConfigInput.debounce ?? defaultConfig.debounce),
     autoTrackPageviews: userConfigInput.autoTrackPageviews ?? defaultConfig.autoTrackPageviews,
     autoTrackSpaRoutes: userConfigInput.autoTrackSpaRoutes ?? defaultConfig.autoTrackSpaRoutes,

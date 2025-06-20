@@ -1,6 +1,6 @@
 export interface RybbitConfig {
   analyticsHost: string;
-  siteId: string | number;
+  siteId: string;
   debounce?: number;
   autoTrackPageviews?: boolean;
   autoTrackSpaRoutes?: boolean;
@@ -38,7 +38,7 @@ export interface WebVitalsData {
 }
 
 export interface TrackPayload extends WebVitalsData {
-  site_id: string | number;
+  site_id: string;
   hostname: string;
   pathname: string;
   querystring: string;
