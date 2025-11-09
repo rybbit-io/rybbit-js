@@ -10,16 +10,10 @@ export interface RybbitConfig {
   debug?: boolean;
 
   // Session replay (local settings only - feature enabled via remote)
-  replayBufferSize?: number;
-  replayBatchInterval?: number;
   replayPrivacyConfig?: {
     maskAllInputs?: boolean;
     maskTextSelectors?: string[];
   };
-
-  // Remote configuration
-  enableRemoteConfig?: boolean;
-  remoteConfigTimeout?: number;
 }
 
 // Internal config that includes remote-controlled settings

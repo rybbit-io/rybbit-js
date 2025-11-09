@@ -184,20 +184,18 @@ export function isSessionReplayActive(): boolean {
 function addEvent(event: SessionReplayEvent): void {
   eventBuffer.push(event);
 
-  const bufferSize = currentConfig.replayBufferSize ?? 250;
-  if (eventBuffer.length >= bufferSize) {
+  if (eventBuffer.length >= 250) {
     flushEvents();
   }
 }
 
 function setupBatchTimer(): void {
   clearBatchTimer();
-  const interval = currentConfig.replayBatchInterval ?? 5000;
   batchTimer = window.setInterval(() => {
     if (eventBuffer.length > 0) {
       flushEvents();
     }
-  }, interval);
+  }, 5000);
 }
 
 function clearBatchTimer(): void {

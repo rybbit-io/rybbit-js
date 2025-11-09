@@ -8,12 +8,6 @@ const localDefaults: Required<Omit<RybbitConfig, "analyticsHost" | "siteId" | "r
     skipPatterns: [],
     maskPatterns: [],
     debug: false,
-    // Session replay local settings
-    replayBufferSize: 250,
-    replayBatchInterval: 5000,
-    // Remote config settings (enabled by default to match tracking script behavior)
-    enableRemoteConfig: true,
-    remoteConfigTimeout: 3000,
   };
 
 // Remote-controlled defaults (when remote config is disabled or fails)
@@ -64,13 +58,12 @@ interface RemoteConfig {
 
 async function fetchRemoteConfig(
   analyticsHost: string,
-  siteId: string,
-  timeout: number
+  siteId: string
 ): Promise<RemoteConfig | null> {
   try {
     log("Fetching remote configuration...");
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
 
     const response = await fetch(`${analyticsHost}/site/${siteId}/tracking-config`, {
       signal: controller.signal,
@@ -136,14 +129,7 @@ export async function initializeConfig(options: RybbitConfig): Promise<boolean> 
     return false;
   }
 
-  const enableRemote = options.enableRemoteConfig ?? localDefaults.enableRemoteConfig;
-  let remoteConfig: RemoteConfig | null = null;
-
-  if (enableRemote) {
-    const timeout = options.remoteConfigTimeout ?? localDefaults.remoteConfigTimeout;
-    remoteConfig = await fetchRemoteConfig(finalAnalyticsHost, siteId, timeout);
-  }
-
+  const remoteConfig = await fetchRemoteConfig(finalAnalyticsHost, siteId);
   const finalRemoteConfig = remoteConfig || remoteDefaults;
 
   const validatedSkipPatterns = Array.isArray(options.skipPatterns)
@@ -165,13 +151,7 @@ export async function initializeConfig(options: RybbitConfig): Promise<boolean> 
     debug: options.debug ?? localDefaults.debug,
 
     // Session replay local settings
-    replayBufferSize: Math.max(1, options.replayBufferSize ?? localDefaults.replayBufferSize),
-    replayBatchInterval: Math.max(1000, options.replayBatchInterval ?? localDefaults.replayBatchInterval),
     replayPrivacyConfig: options.replayPrivacyConfig,
-
-    // Remote config settings
-    enableRemoteConfig: enableRemote,
-    remoteConfigTimeout: Math.max(1000, options.remoteConfigTimeout ?? localDefaults.remoteConfigTimeout),
 
     // Remote-controlled settings (from API, not user config)
     autoTrackPageviews: finalRemoteConfig.autoTrackPageviews,
