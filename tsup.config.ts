@@ -25,4 +25,5 @@ export default defineConfig({
   clean: true,
   minify: true,
   banner,
+  external: ["rrweb"],
 });
