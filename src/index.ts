@@ -1,9 +1,11 @@
 import { initializeConfig, currentConfig } from "./config";
 import { track, identify, clearUserId, getUserId } from "./core";
-import { setupAutoTracking, cleanupAutoTracking, setupDataAttributeTracking } from "./listeners";
+import { setupAutoTracking, cleanupAutoTracking, setupDataAttributeTracking, addPageChangeCallback } from "./listeners";
 import { initWebVitals } from "./webvitals";
+import { setupErrorTracking, cleanupErrorTracking, captureError as captureErrorInternal } from "./errorTracking";
+import { initSessionReplay, cleanupSessionReplay, updateReplayUserId } from "./sessionReplay";
 import { log, logError } from "./utils";
-import { RybbitConfig, RybbitAPI, TrackProperties } from "./types";
+import { RybbitConfig, RybbitAPI, TrackProperties, PageChangeCallback } from "./types";
 
 let isInitialized = false;
 
@@ -13,13 +15,13 @@ const rybbit: RybbitAPI = {
    *
    * @param config - Configuration object.
    */
-  init: (config: RybbitConfig) => {
+  init: async (config: RybbitConfig) => {
     if (isInitialized) {
       logError("Rybbit SDK already initialized. Call init() only once.");
       return;
     }
 
-    const initSuccess = initializeConfig(config);
+    const initSuccess = await initializeConfig(config);
     if (!initSuccess) {
       return;
     }
@@ -30,6 +32,12 @@ const rybbit: RybbitAPI = {
     setupAutoTracking();
     setupDataAttributeTracking();
     initWebVitals();
+
+    // Setup error tracking if enabled
+    setupErrorTracking();
+
+    // Setup session replay if enabled
+    await initSessionReplay(getUserId() || undefined);
   },
 
   /**
@@ -102,6 +110,8 @@ const rybbit: RybbitAPI = {
       return;
     }
     identify(userId);
+    // Update session replay user ID if active
+    updateReplayUserId(userId);
   },
 
   /**
@@ -129,11 +139,44 @@ const rybbit: RybbitAPI = {
   },
 
   /**
+   * Manually captures an error for tracking.
+   *
+   * @param error - The error to capture (Error or ErrorEvent).
+   * @param context - Optional. Additional context about the error.
+   */
+  captureError: (error: Error | ErrorEvent, context?: TrackProperties) => {
+    if (!isInitialized) {
+      logError("Rybbit SDK not initialized. Call rybbit.init() first.");
+      return;
+    }
+    captureErrorInternal(error, context);
+  },
+
+  /**
+   * Registers a callback to be called when the page/route changes.
+   *
+   * @param callback - Function to call on page change. Receives (newPath, previousPath).
+   * @returns A function to unsubscribe the callback.
+   */
+  onPageChange: (callback: PageChangeCallback) => {
+    if (!isInitialized) {
+      logError("Rybbit SDK not initialized. Call rybbit.init() first.");
+      return () => {};
+    }
+    return addPageChangeCallback(callback);
+  },
+
+  /**
    * Cleans up event listeners set up by the SDK.
    *
    * Useful in SPA environments where the SDK might be re-initialized or removed.
    */
-  cleanup: cleanupAutoTracking
+  cleanup: () => {
+    cleanupAutoTracking();
+    cleanupErrorTracking();
+    cleanupSessionReplay();
+    isInitialized = false;
+  }
 };
 
 export default rybbit;

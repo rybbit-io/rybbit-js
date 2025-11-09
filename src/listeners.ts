@@ -1,10 +1,12 @@
 import { currentConfig } from "./config";
 import { track } from "./core";
-import { debounce, isOutboundLink, log } from "./utils";
-import { OutboundLinkProperties } from "./types";
+import { debounce, isOutboundLink, log, logError, getPathname } from "./utils";
+import { OutboundLinkProperties, PageChangeCallback } from "./types";
 
 let pageviewTracker: () => void;
 let isAutoTrackingSetup = false;
+let pageChangeCallbacks: PageChangeCallback[] = [];
+let currentPathname: string = "";
 
 export function setupAutoTracking(): void {
   if (isAutoTrackingSetup) {
@@ -19,9 +21,20 @@ export function setupAutoTracking(): void {
 
   log("Setting up automatic tracking...");
 
+  // Initialize current pathname
+  currentPathname = getPathname();
+
   pageviewTracker = currentConfig.debounce && currentConfig.debounce > 0
-    ? debounce(() => track("pageview"), currentConfig.debounce)
-    : () => track("pageview");
+    ? debounce(() => {
+        const newPath = getPathname();
+        notifyPageChange(newPath);
+        track("pageview");
+      }, currentConfig.debounce)
+    : () => {
+        const newPath = getPathname();
+        notifyPageChange(newPath);
+        track("pageview");
+      };
 
   requestAnimationFrame(() => {
     pageviewTracker();
@@ -105,6 +118,33 @@ function handleClick(event: MouseEvent): void {
   }
 }
 
+export function addPageChangeCallback(callback: PageChangeCallback): () => void {
+  pageChangeCallbacks.push(callback);
+  log("Page change callback added");
+
+  // Return unsubscribe function
+  return () => {
+    pageChangeCallbacks = pageChangeCallbacks.filter(cb => cb !== callback);
+    log("Page change callback removed");
+  };
+}
+
+function notifyPageChange(newPath: string): void {
+  const previousPath = currentPathname;
+  currentPathname = newPath;
+
+  if (previousPath !== newPath) {
+    log(`Page changed from ${previousPath} to ${newPath}`);
+    pageChangeCallbacks.forEach(callback => {
+      try {
+        callback(newPath, previousPath);
+      } catch (error) {
+        logError("Error in page change callback:", error);
+      }
+    });
+  }
+}
+
 export function cleanupAutoTracking(): void {
   if (!isAutoTrackingSetup) return;
 
@@ -113,6 +153,9 @@ export function cleanupAutoTracking(): void {
   window.removeEventListener("popstate", pageviewTracker);
   window.removeEventListener("hashchange", pageviewTracker);
   document.removeEventListener("click", handleClick, true);
+
+  // Clear page change callbacks
+  pageChangeCallbacks = [];
 
   isAutoTrackingSetup = false;
 }

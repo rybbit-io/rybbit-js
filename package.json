@@ -35,6 +35,14 @@
     "url": "https://github.com/rybbit-io/rybbit-js/issues"
   },
   "homepage": "https://github.com/rybbit-io/rybbit-js",
+  "peerDependencies": {
+    "rrweb": "^2.0.0"
+  },
+  "peerDependenciesMeta": {
+    "rrweb": {
+      "optional": true
+    }
+  },
   "devDependencies": {
     "@types/node": "^22.14.1",
     "tsup": "^8.5.0",

@@ -13,9 +13,26 @@ export interface RybbitConfig {
   skipPatterns?: string[];
   maskPatterns?: string[];
   debug?: boolean;
+  // Error tracking
+  captureErrors?: boolean;
+  errorSampleRate?: number;
+  beforeErrorCapture?: (error: ErrorEvent | PromiseRejectionEvent) => boolean | void;
+  // Session replay
+  enableSessionReplay?: boolean;
+  replayBufferSize?: number;
+  replayBatchInterval?: number;
+  replayPrivacyConfig?: {
+    maskAllInputs?: boolean;
+    maskTextSelectors?: string[];
+  };
+  // Remote configuration
+  enableRemoteConfig?: boolean;
+  remoteConfigTimeout?: number;
+  // Enhanced hash routing
+  enhancedHashRouting?: boolean;
 }
 
-export type EventType = "pageview" | "custom_event" | "outbound" | "performance";
+export type EventType = "pageview" | "custom_event" | "outbound" | "performance" | "error";
 
 export type PropertyValue = string | number | boolean;
 
@@ -28,6 +45,17 @@ export interface OutboundLinkProperties extends TrackProperties {
   text: string;
   target: string;
 }
+
+export interface ErrorData {
+  message: string;
+  stack?: string;
+  filename?: string;
+  lineno?: number;
+  colno?: number;
+  timestamp: number;
+}
+
+export type PageChangeCallback = (pathname: string, previousPathname: string) => void;
 
 export interface WebVitalsData {
   lcp?: number | null;
@@ -54,7 +82,7 @@ export interface TrackPayload extends WebVitalsData {
 }
 
 export interface RybbitAPI {
-  init: (config: RybbitConfig) => void;
+  init: (config: RybbitConfig) => Promise<void>;
   pageview: (path?: string) => void;
   event: (name: string, properties?: TrackProperties) => void;
   outbound: (url: string, text?: string, target?: string) => void;
@@ -62,4 +90,6 @@ export interface RybbitAPI {
   clearUserId: () => void;
   getUserId: () => string | null;
   cleanup: () => void;
+  captureError: (error: Error | ErrorEvent, context?: TrackProperties) => void;
+  onPageChange: (callback: PageChangeCallback) => () => void;
 }
