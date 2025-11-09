@@ -38,20 +38,6 @@ export function cleanupErrorTracking(): void {
 }
 
 function handleError(event: ErrorEvent): void {
-  // Allow user to filter errors before capture
-  if (currentConfig.beforeErrorCapture) {
-    const result = currentConfig.beforeErrorCapture(event);
-    if (result === false) {
-      return; // User wants to skip this error
-    }
-  }
-
-  // Sample errors based on errorSampleRate
-  const sampleRate = currentConfig.errorSampleRate ?? 1.0;
-  if (sampleRate < 1.0 && Math.random() > sampleRate) {
-    return; // Skip this error due to sampling
-  }
-
   // Filter out third-party script errors (same-origin only)
   const currentOrigin = window.location.origin;
   const filename = event.filename || "";
@@ -88,20 +74,6 @@ function handleError(event: ErrorEvent): void {
 }
 
 function handleRejection(event: PromiseRejectionEvent): void {
-  // Allow user to filter rejections before capture
-  if (currentConfig.beforeErrorCapture) {
-    const result = currentConfig.beforeErrorCapture(event);
-    if (result === false) {
-      return; // User wants to skip this rejection
-    }
-  }
-
-  // Sample errors based on errorSampleRate
-  const sampleRate = currentConfig.errorSampleRate ?? 1.0;
-  if (sampleRate < 1.0 && Math.random() > sampleRate) {
-    return;
-  }
-
   let message = "Unhandled promise rejection";
   let stack = "";
 

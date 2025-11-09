@@ -76,14 +76,9 @@ export function getPathname(): string {
   const url = new URL(window.location.href);
   let pathname = url.pathname;
 
-  if (currentConfig.trackHashRoutes && url.hash) {
-    if (currentConfig.enhancedHashRouting && url.hash.startsWith("#/")) {
-      // Enhanced hash routing: convert #/page to /page
-      pathname = url.hash.substring(1); // Remove the # to get /page
-    } else {
-      // Traditional behavior: append hash to pathname
-      pathname += url.hash;
-    }
+  if (url.hash) {
+    // Append hash to pathname
+    pathname += url.hash;
   }
 
   return pathname;

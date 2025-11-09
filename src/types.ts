@@ -5,16 +5,9 @@ export interface RybbitConfig {
 
   // Local settings (not controlled by remote config)
   debounce?: number;
-  trackHashRoutes?: boolean;
-  trackDataAttributes?: boolean;
-  webVitalsTimeout?: number;
   skipPatterns?: string[];
   maskPatterns?: string[];
   debug?: boolean;
-
-  // Error tracking (local settings only - feature enabled via remote)
-  errorSampleRate?: number;
-  beforeErrorCapture?: (error: ErrorEvent | PromiseRejectionEvent) => boolean | void;
 
   // Session replay (local settings only - feature enabled via remote)
   replayBufferSize?: number;
@@ -27,9 +20,6 @@ export interface RybbitConfig {
   // Remote configuration
   enableRemoteConfig?: boolean;
   remoteConfigTimeout?: number;
-
-  // Enhanced hash routing
-  enhancedHashRouting?: boolean;
 }
 
 // Internal config that includes remote-controlled settings

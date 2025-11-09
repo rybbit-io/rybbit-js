@@ -2,25 +2,18 @@ import { InternalRybbitConfig, RybbitConfig } from "./types";
 import { log, logError } from "./utils";
 
 // Local-only defaults (not controlled by remote config)
-const localDefaults: Required<Omit<RybbitConfig, "analyticsHost" | "siteId" | "beforeErrorCapture" | "replayPrivacyConfig">> =
+const localDefaults: Required<Omit<RybbitConfig, "analyticsHost" | "siteId" | "replayPrivacyConfig">> =
   {
     debounce: 500,
-    trackHashRoutes: true,
-    trackDataAttributes: true,
-    webVitalsTimeout: 20000,
     skipPatterns: [],
     maskPatterns: [],
     debug: false,
-    // Error tracking local settings
-    errorSampleRate: 1.0,
     // Session replay local settings
     replayBufferSize: 250,
     replayBatchInterval: 5000,
     // Remote config settings (enabled by default to match tracking script behavior)
     enableRemoteConfig: true,
     remoteConfigTimeout: 3000,
-    // Enhanced hash routing
-    enhancedHashRouting: false,
   };
 
 // Remote-controlled defaults (when remote config is disabled or fails)
@@ -167,16 +160,9 @@ export async function initializeConfig(options: RybbitConfig): Promise<boolean> 
 
     // Local settings (user can override)
     debounce: Math.max(0, options.debounce ?? localDefaults.debounce),
-    trackHashRoutes: options.trackHashRoutes ?? localDefaults.trackHashRoutes,
-    trackDataAttributes: options.trackDataAttributes ?? localDefaults.trackDataAttributes,
-    webVitalsTimeout: Math.max(1000, options.webVitalsTimeout ?? localDefaults.webVitalsTimeout),
     skipPatterns: validatedSkipPatterns,
     maskPatterns: validatedMaskPatterns,
     debug: options.debug ?? localDefaults.debug,
-
-    // Error tracking local settings
-    errorSampleRate: Math.max(0, Math.min(1, options.errorSampleRate ?? localDefaults.errorSampleRate)),
-    beforeErrorCapture: options.beforeErrorCapture,
 
     // Session replay local settings
     replayBufferSize: Math.max(1, options.replayBufferSize ?? localDefaults.replayBufferSize),
@@ -186,9 +172,6 @@ export async function initializeConfig(options: RybbitConfig): Promise<boolean> 
     // Remote config settings
     enableRemoteConfig: enableRemote,
     remoteConfigTimeout: Math.max(1000, options.remoteConfigTimeout ?? localDefaults.remoteConfigTimeout),
-
-    // Enhanced hash routing
-    enhancedHashRouting: options.enhancedHashRouting ?? localDefaults.enhancedHashRouting,
 
     // Remote-controlled settings (from API, not user config)
     autoTrackPageviews: finalRemoteConfig.autoTrackPageviews,

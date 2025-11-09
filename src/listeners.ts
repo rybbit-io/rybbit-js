@@ -59,21 +59,12 @@ export function setupAutoTracking(): void {
     log("SPA route change tracking is disabled.");
   }
 
-  if (currentConfig.trackHashRoutes) {
-    window.addEventListener("hashchange", pageviewTracker);
-  } else {
-    log("Hash route tracking is disabled.");
-  }
+  window.addEventListener("hashchange", pageviewTracker);
 
   isAutoTrackingSetup = true;
 }
 
 export function setupDataAttributeTracking(): void {
-  if (!currentConfig.trackDataAttributes) {
-    log("Data attribute tracking is disabled.");
-    return;
-  }
-
   log("Setting up data attribute and outbound link tracking.");
   document.addEventListener("click", handleClick, true);
 }

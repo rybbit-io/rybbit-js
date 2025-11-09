@@ -80,7 +80,7 @@ export function initWebVitals(): void {
         log("Web vitals timeout reached, sending collected metrics.");
         sendWebVitals();
       }
-    }, currentConfig.webVitalsTimeout || 20000);
+    }, 20000);
 
     window.addEventListener("beforeunload", () => {
       if (!webVitalsSent) {
