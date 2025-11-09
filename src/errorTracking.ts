@@ -13,12 +13,10 @@ export function setupErrorTracking(): void {
 
   log("Setting up error tracking");
 
-  // Global error handler for uncaught exceptions
   errorListener = (event: ErrorEvent) => {
     handleError(event);
   };
 
-  // Global handler for unhandled promise rejections
   rejectionListener = (event: PromiseRejectionEvent) => {
     handleRejection(event);
   };

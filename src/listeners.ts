@@ -21,7 +21,6 @@ export function setupAutoTracking(): void {
 
   log("Setting up automatic tracking...");
 
-  // Initialize current pathname
   currentPathname = getPathname();
 
   pageviewTracker = currentConfig.debounce && currentConfig.debounce > 0
@@ -122,7 +121,6 @@ export function addPageChangeCallback(callback: PageChangeCallback): () => void 
   pageChangeCallbacks.push(callback);
   log("Page change callback added");
 
-  // Return unsubscribe function
   return () => {
     pageChangeCallbacks = pageChangeCallbacks.filter(cb => cb !== callback);
     log("Page change callback removed");
@@ -154,7 +152,6 @@ export function cleanupAutoTracking(): void {
   window.removeEventListener("hashchange", pageviewTracker);
   document.removeEventListener("click", handleClick, true);
 
-  // Clear page change callbacks
   pageChangeCallbacks = [];
 
   isAutoTrackingSetup = false;

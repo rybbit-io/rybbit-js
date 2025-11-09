@@ -138,8 +138,28 @@ function startRecording(): void {
   }
 }
 
+export function startSessionReplay(): void {
+  if (!currentConfig.enableSessionReplay) {
+    logError("Session replay is not enabled. Enable it via remote config.");
+    return;
+  }
+
+  if (!rrwebRecord) {
+    logError("rrweb is not loaded. Ensure it's installed as a peer dependency.");
+    return;
+  }
+
+  if (isRecording) {
+    log("Session replay is already recording");
+    return;
+  }
+
+  startRecording();
+}
+
 export function stopSessionReplay(): void {
   if (!isRecording) {
+    log("Session replay is not currently recording");
     return;
   }
 
@@ -150,7 +170,6 @@ export function stopSessionReplay(): void {
   isRecording = false;
   clearBatchTimer();
 
-  // Send any remaining events
   if (eventBuffer.length > 0) {
     flushEvents();
   }
@@ -165,7 +184,6 @@ export function isSessionReplayActive(): boolean {
 function addEvent(event: SessionReplayEvent): void {
   eventBuffer.push(event);
 
-  // Auto-flush if buffer is full
   const bufferSize = currentConfig.replayBufferSize ?? 250;
   if (eventBuffer.length >= bufferSize) {
     flushEvents();
@@ -238,20 +256,16 @@ async function sendBatch(batch: SessionReplayBatch): Promise<void> {
   log(`Session replay batch sent: ${batch.events.length} events`);
 }
 
-// Update user ID when it changes
 export function updateReplayUserId(userId: string | undefined): void {
   currentUserId = userId;
 }
 
-// Handle page navigation for SPAs
 export function onReplayPageChange(): void {
   if (isRecording && eventBuffer.length > 0) {
-    // Flush current events before page change
     flushEvents();
   }
 }
 
-// Cleanup on SDK cleanup
 export function cleanupSessionReplay(): void {
   stopSessionReplay();
 }

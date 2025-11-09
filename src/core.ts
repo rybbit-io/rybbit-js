@@ -56,9 +56,7 @@ export function track(
 
     if (eventType === "pageview" && typeof pathOverride === "string" && pathOverride.trim()) {
       log(`Using path override: ${pathOverride}`);
-      // Check if override includes query params
       try {
-        // Use a dummy base to parse the override path/query correctly
         const overrideUrl = new URL(pathOverride, "http://dummybase");
         pathForTracking = overrideUrl.pathname;
         searchForTracking = overrideUrl.search || "";
@@ -69,7 +67,6 @@ export function track(
         searchForTracking = currentConfig.trackQuerystring ? url.search : "";
       }
     } else {
-      // Default behavior
       pathForTracking = getPathname();
       searchForTracking = currentConfig.trackQuerystring ? url.search : "";
     }

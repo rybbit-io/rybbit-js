@@ -104,4 +104,7 @@ export interface RybbitAPI {
   cleanup: () => void;
   captureError: (error: Error | ErrorEvent, context?: TrackProperties) => void;
   onPageChange: (callback: PageChangeCallback) => () => void;
+  startSessionReplay: () => void;
+  stopSessionReplay: () => void;
+  isSessionReplayActive: () => boolean;
 }

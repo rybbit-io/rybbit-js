@@ -1,5 +1,5 @@
-import {InternalRybbitConfig, RybbitConfig} from "./types";
-import {log, logError} from "./utils";
+import { InternalRybbitConfig, RybbitConfig } from "./types";
+import { log, logError } from "./utils";
 
 // Local-only defaults (not controlled by remote config)
 const localDefaults: Required<Omit<RybbitConfig, "analyticsHost" | "siteId" | "beforeErrorCapture" | "replayPrivacyConfig">> =
@@ -143,7 +143,6 @@ export async function initializeConfig(options: RybbitConfig): Promise<boolean> 
     return false;
   }
 
-  // Fetch remote config (always enabled by default)
   const enableRemote = options.enableRemoteConfig ?? localDefaults.enableRemoteConfig;
   let remoteConfig: RemoteConfig | null = null;
 
@@ -152,10 +151,8 @@ export async function initializeConfig(options: RybbitConfig): Promise<boolean> 
     remoteConfig = await fetchRemoteConfig(finalAnalyticsHost, siteId, timeout);
   }
 
-  // Use remote config if fetched, otherwise fall back to defaults
   const finalRemoteConfig = remoteConfig || remoteDefaults;
 
-  // Validate arrays
   const validatedSkipPatterns = Array.isArray(options.skipPatterns)
     ? options.skipPatterns
     : localDefaults.skipPatterns;
@@ -163,7 +160,6 @@ export async function initializeConfig(options: RybbitConfig): Promise<boolean> 
     ? options.maskPatterns
     : localDefaults.maskPatterns;
 
-  // Build internal config: local settings from user, remote settings from API
   internalConfig = {
     // Required
     analyticsHost: finalAnalyticsHost,

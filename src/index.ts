@@ -3,7 +3,7 @@ import { track, identify, clearUserId, getUserId } from "./core";
 import { setupAutoTracking, cleanupAutoTracking, setupDataAttributeTracking, addPageChangeCallback } from "./listeners";
 import { initWebVitals } from "./webvitals";
 import { setupErrorTracking, cleanupErrorTracking, captureError as captureErrorInternal } from "./errorTracking";
-import { initSessionReplay, cleanupSessionReplay, updateReplayUserId } from "./sessionReplay";
+import { initSessionReplay, cleanupSessionReplay, updateReplayUserId, startSessionReplay as startReplay, stopSessionReplay as stopReplay, isSessionReplayActive } from "./sessionReplay";
 import { log, logError } from "./utils";
 import { RybbitConfig, RybbitAPI, TrackProperties, PageChangeCallback } from "./types";
 
@@ -33,10 +33,7 @@ const rybbit: RybbitAPI = {
     setupDataAttributeTracking();
     initWebVitals();
 
-    // Setup error tracking if enabled
     setupErrorTracking();
-
-    // Setup session replay if enabled
     await initSessionReplay(getUserId() || undefined);
   },
 
@@ -110,7 +107,6 @@ const rybbit: RybbitAPI = {
       return;
     }
     identify(userId);
-    // Update session replay user ID if active
     updateReplayUserId(userId);
   },
 
@@ -164,6 +160,43 @@ const rybbit: RybbitAPI = {
       return () => {};
     }
     return addPageChangeCallback(callback);
+  },
+
+  /**
+   * Manually starts session replay recording.
+   *
+   * Only works if session replay is enabled via remote config.
+   */
+  startSessionReplay: () => {
+    if (!isInitialized) {
+      logError("Rybbit SDK not initialized. Call rybbit.init() first.");
+      return;
+    }
+    startReplay();
+  },
+
+  /**
+   * Manually stops session replay recording.
+   */
+  stopSessionReplay: () => {
+    if (!isInitialized) {
+      logError("Rybbit SDK not initialized. Call rybbit.init() first.");
+      return;
+    }
+    stopReplay();
+  },
+
+  /**
+   * Checks if session replay is currently active/recording.
+   *
+   * @returns True if session replay is currently recording, false otherwise.
+   */
+  isSessionReplayActive: () => {
+    if (!isInitialized) {
+      logError("Rybbit SDK not initialized. Call rybbit.init() first.");
+      return false;
+    }
+    return isSessionReplayActive();
   },
 
   /**
