@@ -1,35 +1,47 @@
 export interface RybbitConfig {
+  // Required
   analyticsHost: string;
   siteId: string;
+
+  // Local settings (not controlled by remote config)
   debounce?: number;
-  autoTrackPageviews?: boolean;
-  autoTrackSpaRoutes?: boolean;
-  trackQuerystring?: boolean;
-  trackOutboundLinks?: boolean;
   trackHashRoutes?: boolean;
   trackDataAttributes?: boolean;
-  trackWebVitals?: boolean;
   webVitalsTimeout?: number;
   skipPatterns?: string[];
   maskPatterns?: string[];
   debug?: boolean;
-  // Error tracking
-  captureErrors?: boolean;
+
+  // Error tracking (local settings only - feature enabled via remote)
   errorSampleRate?: number;
   beforeErrorCapture?: (error: ErrorEvent | PromiseRejectionEvent) => boolean | void;
-  // Session replay
-  enableSessionReplay?: boolean;
+
+  // Session replay (local settings only - feature enabled via remote)
   replayBufferSize?: number;
   replayBatchInterval?: number;
   replayPrivacyConfig?: {
     maskAllInputs?: boolean;
     maskTextSelectors?: string[];
   };
+
   // Remote configuration
   enableRemoteConfig?: boolean;
   remoteConfigTimeout?: number;
+
   // Enhanced hash routing
   enhancedHashRouting?: boolean;
+}
+
+// Internal config that includes remote-controlled settings
+export interface InternalRybbitConfig extends RybbitConfig {
+  // Remote-controlled settings (fetched from API)
+  autoTrackPageviews: boolean;
+  autoTrackSpaRoutes: boolean;
+  trackQuerystring: boolean;
+  trackOutboundLinks: boolean;
+  trackWebVitals: boolean;
+  captureErrors: boolean;
+  enableSessionReplay: boolean;
 }
 
 export type EventType = "pageview" | "custom_event" | "outbound" | "performance" | "error";

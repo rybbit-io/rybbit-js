@@ -1,47 +1,54 @@
-import { RybbitConfig } from "./types";
-import { log, logError } from "./utils";
+import {InternalRybbitConfig, RybbitConfig} from "./types";
+import {log, logError} from "./utils";
 
-const defaultConfig: Required<Omit<RybbitConfig, "analyticsHost" | "siteId" | "beforeErrorCapture" | "replayPrivacyConfig">> =
+// Local-only defaults (not controlled by remote config)
+const localDefaults: Required<Omit<RybbitConfig, "analyticsHost" | "siteId" | "beforeErrorCapture" | "replayPrivacyConfig">> =
   {
     debounce: 500,
-    autoTrackPageviews: true,
-    autoTrackSpaRoutes: true,
-    trackQuerystring: true,
-    trackOutboundLinks: true,
     trackHashRoutes: true,
     trackDataAttributes: true,
-    trackWebVitals: false,
     webVitalsTimeout: 20000,
     skipPatterns: [],
     maskPatterns: [],
     debug: false,
-    // Error tracking defaults
-    captureErrors: false,
+    // Error tracking local settings
     errorSampleRate: 1.0,
-    // Session replay defaults
-    enableSessionReplay: false,
+    // Session replay local settings
     replayBufferSize: 250,
     replayBatchInterval: 5000,
-    // Remote config defaults
-    enableRemoteConfig: false,
+    // Remote config settings (enabled by default to match tracking script behavior)
+    enableRemoteConfig: true,
     remoteConfigTimeout: 3000,
     // Enhanced hash routing
     enhancedHashRouting: false,
   };
 
-let internalConfig: RybbitConfig | null = null;
+// Remote-controlled defaults (when remote config is disabled or fails)
+const remoteDefaults = {
+  autoTrackPageviews: true,
+  autoTrackSpaRoutes: true,
+  trackQuerystring: true,
+  trackOutboundLinks: true,
+  trackWebVitals: false,
+  captureErrors: false,
+  enableSessionReplay: false,
+};
 
-export const currentConfig: Readonly<RybbitConfig> = new Proxy(
-  {} as RybbitConfig,
+let internalConfig: InternalRybbitConfig | null = null;
+
+export const currentConfig: Readonly<InternalRybbitConfig> = new Proxy(
+  {} as InternalRybbitConfig,
   {
-    get: (_, prop: keyof RybbitConfig) => {
+    get: (_, prop: keyof InternalRybbitConfig) => {
       if (!internalConfig) {
         if (prop !== "debug") {
           logError(
             "Rybbit SDK accessed before initialization. Call rybbit.init() first."
           );
         }
-        return defaultConfig[prop as keyof typeof defaultConfig] ?? undefined;
+        return (localDefaults[prop as keyof typeof localDefaults] ??
+                remoteDefaults[prop as keyof typeof remoteDefaults] ??
+                undefined);
       }
       return internalConfig[prop];
     },
@@ -52,26 +59,46 @@ export const currentConfig: Readonly<RybbitConfig> = new Proxy(
   }
 );
 
+interface RemoteConfig {
+  autoTrackPageviews: boolean;
+  autoTrackSpaRoutes: boolean;
+  trackQuerystring: boolean;
+  trackOutboundLinks: boolean;
+  trackWebVitals: boolean;
+  captureErrors: boolean;
+  enableSessionReplay: boolean;
+}
+
 async function fetchRemoteConfig(
   analyticsHost: string,
   siteId: string,
   timeout: number
-): Promise<Partial<RybbitConfig> | null> {
+): Promise<RemoteConfig | null> {
   try {
     log("Fetching remote configuration...");
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-    const response = await fetch(`${analyticsHost}/config/${siteId}`, {
+    const response = await fetch(`${analyticsHost}/site/${siteId}/tracking-config`, {
       signal: controller.signal,
     });
 
     clearTimeout(timeoutId);
 
     if (response.ok) {
-      const remoteConfig = await response.json();
-      log("Remote configuration fetched successfully");
-      return remoteConfig;
+      const apiConfig = await response.json();
+      log("Remote configuration fetched successfully", apiConfig);
+
+      // Map API field names to internal config field names
+      return {
+        autoTrackPageviews: apiConfig.trackInitialPageView ?? remoteDefaults.autoTrackPageviews,
+        autoTrackSpaRoutes: apiConfig.trackSpaNavigation ?? remoteDefaults.autoTrackSpaRoutes,
+        trackQuerystring: apiConfig.trackUrlParams ?? remoteDefaults.trackQuerystring,
+        trackOutboundLinks: apiConfig.trackOutbound ?? remoteDefaults.trackOutboundLinks,
+        trackWebVitals: apiConfig.webVitals ?? remoteDefaults.trackWebVitals,
+        captureErrors: apiConfig.trackErrors ?? remoteDefaults.captureErrors,
+        enableSessionReplay: apiConfig.sessionReplay ?? remoteDefaults.enableSessionReplay,
+      };
     } else {
       logError(`Failed to fetch remote config: ${response.status}`);
       return null;
@@ -98,10 +125,9 @@ export async function initializeConfig(options: RybbitConfig): Promise<boolean> 
     );
     return false;
   }
-  const userConfigInput = options;
 
-  const analyticsHost = userConfigInput.analyticsHost;
-  if (analyticsHost.trim() === "") {
+  const analyticsHost = options.analyticsHost;
+  if (!analyticsHost || analyticsHost.trim() === "") {
     logError(
       "`analyticsHost` is required in Rybbit config and must be a non-empty string."
     );
@@ -109,64 +135,73 @@ export async function initializeConfig(options: RybbitConfig): Promise<boolean> 
   }
   const finalAnalyticsHost = analyticsHost.replace(/\/$/, "");
 
-  const siteId = userConfigInput.siteId;
-  if (siteId.trim() === "") {
+  const siteId = options.siteId;
+  if (!siteId || siteId.trim() === "") {
     logError(
       "`siteId` is required in Rybbit config and must be a non-empty string."
     );
     return false;
   }
 
-  // Fetch remote config if enabled
-  let remoteConfig: Partial<RybbitConfig> | null = null;
-  if (userConfigInput.enableRemoteConfig ?? defaultConfig.enableRemoteConfig) {
-    const timeout = userConfigInput.remoteConfigTimeout ?? defaultConfig.remoteConfigTimeout;
+  // Fetch remote config (always enabled by default)
+  const enableRemote = options.enableRemoteConfig ?? localDefaults.enableRemoteConfig;
+  let remoteConfig: RemoteConfig | null = null;
+
+  if (enableRemote) {
+    const timeout = options.remoteConfigTimeout ?? localDefaults.remoteConfigTimeout;
     remoteConfig = await fetchRemoteConfig(finalAnalyticsHost, siteId, timeout);
   }
 
-  // Merge configs: User > Remote > Defaults
-  const mergedConfig = {
-    ...defaultConfig,
-    ...(remoteConfig || {}),
-    ...userConfigInput,
-  };
+  // Use remote config if fetched, otherwise fall back to defaults
+  const finalRemoteConfig = remoteConfig || remoteDefaults;
 
-  const validatedSkipPatterns = Array.isArray(mergedConfig.skipPatterns)
-    ? mergedConfig.skipPatterns
-    : defaultConfig.skipPatterns;
-  const validatedMaskPatterns = Array.isArray(mergedConfig.maskPatterns)
-    ? mergedConfig.maskPatterns
-    : defaultConfig.maskPatterns;
+  // Validate arrays
+  const validatedSkipPatterns = Array.isArray(options.skipPatterns)
+    ? options.skipPatterns
+    : localDefaults.skipPatterns;
+  const validatedMaskPatterns = Array.isArray(options.maskPatterns)
+    ? options.maskPatterns
+    : localDefaults.maskPatterns;
 
+  // Build internal config: local settings from user, remote settings from API
   internalConfig = {
+    // Required
     analyticsHost: finalAnalyticsHost,
     siteId: siteId,
-    debounce: Math.max(0, mergedConfig.debounce),
-    autoTrackPageviews: mergedConfig.autoTrackPageviews,
-    autoTrackSpaRoutes: mergedConfig.autoTrackSpaRoutes,
-    trackQuerystring: mergedConfig.trackQuerystring,
-    trackOutboundLinks: mergedConfig.trackOutboundLinks,
-    trackHashRoutes: mergedConfig.trackHashRoutes,
-    trackDataAttributes: mergedConfig.trackDataAttributes,
-    trackWebVitals: mergedConfig.trackWebVitals,
-    webVitalsTimeout: Math.max(1000, mergedConfig.webVitalsTimeout),
+
+    // Local settings (user can override)
+    debounce: Math.max(0, options.debounce ?? localDefaults.debounce),
+    trackHashRoutes: options.trackHashRoutes ?? localDefaults.trackHashRoutes,
+    trackDataAttributes: options.trackDataAttributes ?? localDefaults.trackDataAttributes,
+    webVitalsTimeout: Math.max(1000, options.webVitalsTimeout ?? localDefaults.webVitalsTimeout),
     skipPatterns: validatedSkipPatterns,
     maskPatterns: validatedMaskPatterns,
-    debug: mergedConfig.debug,
-    // Error tracking
-    captureErrors: mergedConfig.captureErrors,
-    errorSampleRate: Math.max(0, Math.min(1, mergedConfig.errorSampleRate)),
-    beforeErrorCapture: mergedConfig.beforeErrorCapture,
-    // Session replay
-    enableSessionReplay: mergedConfig.enableSessionReplay,
-    replayBufferSize: Math.max(1, mergedConfig.replayBufferSize),
-    replayBatchInterval: Math.max(1000, mergedConfig.replayBatchInterval),
-    replayPrivacyConfig: mergedConfig.replayPrivacyConfig,
-    // Remote config
-    enableRemoteConfig: mergedConfig.enableRemoteConfig,
-    remoteConfigTimeout: Math.max(1000, mergedConfig.remoteConfigTimeout),
+    debug: options.debug ?? localDefaults.debug,
+
+    // Error tracking local settings
+    errorSampleRate: Math.max(0, Math.min(1, options.errorSampleRate ?? localDefaults.errorSampleRate)),
+    beforeErrorCapture: options.beforeErrorCapture,
+
+    // Session replay local settings
+    replayBufferSize: Math.max(1, options.replayBufferSize ?? localDefaults.replayBufferSize),
+    replayBatchInterval: Math.max(1000, options.replayBatchInterval ?? localDefaults.replayBatchInterval),
+    replayPrivacyConfig: options.replayPrivacyConfig,
+
+    // Remote config settings
+    enableRemoteConfig: enableRemote,
+    remoteConfigTimeout: Math.max(1000, options.remoteConfigTimeout ?? localDefaults.remoteConfigTimeout),
+
     // Enhanced hash routing
-    enhancedHashRouting: mergedConfig.enhancedHashRouting,
+    enhancedHashRouting: options.enhancedHashRouting ?? localDefaults.enhancedHashRouting,
+
+    // Remote-controlled settings (from API, not user config)
+    autoTrackPageviews: finalRemoteConfig.autoTrackPageviews,
+    autoTrackSpaRoutes: finalRemoteConfig.autoTrackSpaRoutes,
+    trackQuerystring: finalRemoteConfig.trackQuerystring,
+    trackOutboundLinks: finalRemoteConfig.trackOutboundLinks,
+    trackWebVitals: finalRemoteConfig.trackWebVitals,
+    captureErrors: finalRemoteConfig.captureErrors,
+    enableSessionReplay: finalRemoteConfig.enableSessionReplay,
   };
 
   return true;
