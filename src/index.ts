@@ -1,5 +1,5 @@
 import { initializeConfig, currentConfig } from "./config";
-import { track, identify, clearUserId, getUserId } from "./core";
+import { track, identify, setTraits, clearUserId, getUserId } from "./core";
 import { setupAutoTracking, cleanupAutoTracking, setupDataAttributeTracking, addPageChangeCallback } from "./listeners";
 import { initWebVitals } from "./webvitals";
 import { setupErrorTracking, cleanupErrorTracking, captureError as captureErrorInternal } from "./errorTracking";
@@ -97,17 +97,31 @@ const rybbit: RybbitAPI = {
   },
 
   /**
-   * Identifies a user with a custom user ID.
+   * Identifies a user with a custom user ID and optional traits.
    *
    * @param userId - The user ID to associate with tracking events.
+   * @param traits - Optional. An object containing user attributes/properties.
    */
-  identify: (userId: string) => {
+  identify: (userId: string, traits?: Record<string, unknown>) => {
     if (!isInitialized) {
       logError("Rybbit SDK not initialized. Call rybbit.init() first.");
       return;
     }
-    identify(userId);
+    identify(userId, traits);
     updateReplayUserId(userId);
+  },
+
+  /**
+   * Updates traits for the currently identified user.
+   *
+   * @param traits - An object containing user attributes/properties to update.
+   */
+  setTraits: (traits: Record<string, unknown>) => {
+    if (!isInitialized) {
+      logError("Rybbit SDK not initialized. Call rybbit.init() first.");
+      return;
+    }
+    setTraits(traits);
   },
 
   /**

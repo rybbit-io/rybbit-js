@@ -82,7 +82,8 @@ export interface RybbitAPI {
   pageview: (path?: string) => void;
   event: (name: string, properties?: TrackProperties) => void;
   outbound: (url: string, text?: string, target?: string) => void;
-  identify: (userId: string) => void;
+  identify: (userId: string, traits?: Record<string, unknown>) => void;
+  setTraits: (traits: Record<string, unknown>) => void;
   clearUserId: () => void;
   getUserId: () => string | null;
   cleanup: () => void;

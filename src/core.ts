@@ -137,7 +137,38 @@ function sendWithFetch(endpoint: string, data: string): void {
   });
 }
 
-export function identify(userId: string): void {
+async function sendIdentifyEvent(
+  userId: string,
+  traits?: Record<string, unknown>,
+  isNewIdentify: boolean = true
+): Promise<void> {
+  if (!currentConfig || !currentConfig.analyticsHost || !currentConfig.siteId) {
+    logError("Rybbit config not available. Ensure rybbit.init() was called successfully.");
+    return;
+  }
+
+  try {
+    await fetch(`${currentConfig.analyticsHost}/identify`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        site_id: currentConfig.siteId,
+        user_id: userId,
+        traits: traits,
+        is_new_identify: isNewIdentify,
+      }),
+      mode: "cors",
+      keepalive: true,
+    });
+    log("Identify event sent:", { userId, traits, isNewIdentify });
+  } catch (error) {
+    logError("Failed to send identify event:", error);
+  }
+}
+
+export function identify(userId: string, traits?: Record<string, unknown>): void {
   if (userId.trim() === "") {
     logError("User ID must be a non-empty string");
     return;
@@ -149,6 +180,23 @@ export function identify(userId: string): void {
   } catch (e) {
     logError("Could not persist user ID to localStorage");
   }
+
+  sendIdentifyEvent(customUserId, traits, true);
+}
+
+export function setTraits(traits: Record<string, unknown>): void {
+  if (!traits || typeof traits !== "object") {
+    logError("Traits must be an object");
+    return;
+  }
+
+  const userId = customUserId;
+  if (!userId) {
+    logError("Cannot set traits without identifying user first. Call identify() first.");
+    return;
+  }
+
+  sendIdentifyEvent(userId, traits, false);
 }
 
 export function clearUserId(): void {
