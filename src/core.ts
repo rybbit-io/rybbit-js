@@ -95,8 +95,8 @@ export function track(
       page_title: document.title,
       referrer: document.referrer || "direct",
       type: eventType,
-      ...((eventType === "custom_event" || eventType === "performance") && { event_name: eventName }),
-      ...((eventType === "custom_event" || eventType === "outbound") && Object.keys(properties ?? {}).length > 0 && {
+      ...((eventType === "custom_event" || eventType === "performance" || eventType === "error") && { event_name: eventName }),
+      ...((eventType === "custom_event" || eventType === "outbound" || eventType === "error") && Object.keys(properties ?? {}).length > 0 && {
         properties: JSON.stringify(properties),
       }),
       ...(eventType === "performance" && webVitals && { ...webVitals }),
