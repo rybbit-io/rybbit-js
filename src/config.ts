@@ -65,7 +65,7 @@ async function fetchRemoteConfig(
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 3000);
 
-    const response = await fetch(`${analyticsHost}/site/${siteId}/tracking-config`, {
+    const response = await fetch(`${analyticsHost}/site/tracking-config/${siteId}`, {
       signal: controller.signal,
     });
 
