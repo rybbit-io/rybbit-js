@@ -9,15 +9,13 @@ interface SessionReplayEvent {
 }
 
 interface SessionReplayBatch {
-  sessionId: string;
-  siteId: string;
-  userId?: string;
+  userId: string;
   events: SessionReplayEvent[];
-  metadata: {
+  metadata?: {
     pageUrl: string;
-    screenWidth: number;
-    screenHeight: number;
-    language: string;
+    viewportWidth?: number;
+    viewportHeight?: number;
+    language?: string;
   };
 }
 
@@ -26,11 +24,16 @@ type RrwebRecord = (options: {
   emit: (event: any) => void;
   checkoutEveryNms?: number;
   checkoutEveryNth?: number;
-  maskAllInputs?: boolean;
-  maskInputOptions?: any;
+  blockClass?: string | RegExp;
+  blockSelector?: string;
+  ignoreClass?: string | RegExp;
+  ignoreSelector?: string;
+  maskTextClass?: string | RegExp;
   maskTextSelector?: string;
-  slimDOMOptions?: any;
-  sampling?: any;
+  maskAllInputs?: boolean;
+  maskInputOptions?: Record<string, boolean>;
+  slimDOMOptions?: Record<string, boolean> | boolean;
+  sampling?: Record<string, any>;
   recordCanvas?: boolean;
   collectFonts?: boolean;
 }) => () => void;
@@ -40,13 +43,7 @@ let isRecording = false;
 let stopRecordingFn: (() => void) | null = null;
 let eventBuffer: SessionReplayEvent[] = [];
 let batchTimer: number | undefined;
-let sessionId: string | null = null;
 let currentUserId: string | undefined;
-
-// Generate a unique session ID
-function generateSessionId(): string {
-  return `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
-}
 
 export async function initSessionReplay(userId?: string): Promise<void> {
   if (!currentConfig.enableSessionReplay) {
@@ -54,7 +51,6 @@ export async function initSessionReplay(userId?: string): Promise<void> {
   }
 
   currentUserId = userId;
-  sessionId = generateSessionId();
 
   try {
     // Dynamically import rrweb from peer dependency
@@ -75,6 +71,39 @@ function startRecording(): void {
   try {
     const privacyConfig = currentConfig.replayPrivacyConfig || {};
 
+    // Default sampling configuration (matches analytics-script)
+    const defaultSampling = {
+      mousemove: false, // Don't record mouse moves
+      mouseInteraction: {
+        MouseUp: false,
+        MouseDown: false,
+        Click: true, // Only record clicks
+        ContextMenu: false,
+        DblClick: true,
+        Focus: true,
+        Blur: true,
+        TouchStart: false,
+        TouchEnd: false,
+      },
+      scroll: 500, // Sample scroll events every 500ms
+      input: "last", // Only record the final input value
+      media: 800, // Sample media interactions less frequently
+    };
+
+    // Default slimDOMOptions (matches analytics-script)
+    const defaultSlimDOMOptions = {
+      script: false,
+      comment: true,
+      headFavicon: true,
+      headWhitespace: true,
+      headMetaDescKeywords: true,
+      headMetaSocial: true,
+      headMetaRobots: true,
+      headMetaHttpEquiv: true,
+      headMetaAuthorship: true,
+      headMetaVerification: true,
+    };
+
     const recordingOptions: Parameters<RrwebRecord>[0] = {
       emit: (event: any) => {
         addEvent({
@@ -83,45 +112,20 @@ function startRecording(): void {
           timestamp: event.timestamp || Date.now(),
         });
       },
-      recordCanvas: false, // Disable canvas recording to reduce data
-      collectFonts: false, // Disable font collection to reduce data
+      recordCanvas: false, // Always disabled to save disk space
       checkoutEveryNms: 60000, // Checkpoint every 60 seconds
       checkoutEveryNth: 500, // Checkpoint every 500 events
-      maskAllInputs: privacyConfig.maskAllInputs ?? true, // Mask all input values for privacy by default
-      maskInputOptions: {
-        password: true,
-        email: true,
-      },
-      slimDOMOptions: {
-        script: false,
-        comment: true,
-        headFavicon: true,
-        headWhitespace: true,
-        headMetaDescKeywords: true,
-        headMetaSocial: true,
-        headMetaRobots: true,
-        headMetaHttpEquiv: true,
-        headMetaAuthorship: true,
-        headMetaVerification: true,
-      },
-      sampling: {
-        // Aggressive sampling to reduce data volume
-        mousemove: false, // Don't record mouse moves
-        mouseInteraction: {
-          MouseUp: false,
-          MouseDown: false,
-          Click: true, // Only record clicks
-          ContextMenu: false,
-          DblClick: true,
-          Focus: true,
-          Blur: true,
-          TouchStart: false,
-          TouchEnd: false,
-        },
-        scroll: 500, // Sample scroll events every 500ms
-        input: "last", // Only record the final input value
-        media: 800, // Sample media interactions less frequently
-      },
+      // Use config values with fallbacks to defaults (matches analytics-script)
+      blockClass: privacyConfig.blockClass ?? 'rr-block',
+      blockSelector: privacyConfig.blockSelector ?? undefined,
+      ignoreClass: privacyConfig.ignoreClass ?? 'rr-ignore',
+      ignoreSelector: privacyConfig.ignoreSelector ?? undefined,
+      maskTextClass: privacyConfig.maskTextClass ?? 'rr-mask',
+      maskAllInputs: privacyConfig.maskAllInputs ?? true,
+      maskInputOptions: { password: true, email: true },
+      collectFonts: privacyConfig.collectFonts ?? true, // Matches analytics-script default
+      sampling: defaultSampling,
+      slimDOMOptions: privacyConfig.slimDOMOptions ?? defaultSlimDOMOptions,
     };
 
     // Add custom text masking selectors if configured
@@ -206,7 +210,7 @@ function clearBatchTimer(): void {
 }
 
 function flushEvents(): void {
-  if (eventBuffer.length === 0 || !sessionId) {
+  if (eventBuffer.length === 0) {
     return;
   }
 
@@ -214,14 +218,12 @@ function flushEvents(): void {
   eventBuffer = [];
 
   const batch: SessionReplayBatch = {
-    sessionId,
-    siteId: currentConfig.siteId,
-    userId: currentUserId,
+    userId: currentUserId || "",
     events,
     metadata: {
       pageUrl: window.location.href,
-      screenWidth: window.screen.width,
-      screenHeight: window.screen.height,
+      viewportWidth: screen.width,
+      viewportHeight: screen.height,
       language: navigator.language,
     },
   };
@@ -234,7 +236,7 @@ function flushEvents(): void {
 }
 
 async function sendBatch(batch: SessionReplayBatch): Promise<void> {
-  const endpoint = `${currentConfig.analyticsHost}/replay`;
+  const endpoint = `${currentConfig.analyticsHost}/session-replay/record/${currentConfig.siteId}`;
   const data = JSON.stringify(batch);
 
   const response = await fetch(endpoint, {

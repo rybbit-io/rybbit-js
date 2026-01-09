@@ -80,7 +80,7 @@ const rybbit: RybbitAPI = {
    * @param text - Optional. The text content of the link.
    * @param target - Optional. The target attribute of the link.
    */
-  outbound: (
+  trackOutbound: (
     url: string,
     text: string = "",
     target: string = "_self"
@@ -154,7 +154,7 @@ const rybbit: RybbitAPI = {
    * @param error - The error to capture (Error or ErrorEvent).
    * @param context - Optional. Additional context about the error.
    */
-  captureError: (error: Error | ErrorEvent, context?: TrackProperties) => {
+  error: (error: Error | ErrorEvent, context?: TrackProperties) => {
     if (!isInitialized) {
       logError("Rybbit SDK not initialized. Call rybbit.init() first.");
       return;

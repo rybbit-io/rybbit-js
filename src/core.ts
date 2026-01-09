@@ -93,7 +93,7 @@ export function track(
       screenHeight: window.screen.height,
       language: navigator.language,
       page_title: document.title,
-      referrer: document.referrer || "direct",
+      referrer: document.referrer,
       type: eventType,
       ...((eventType === "custom_event" || eventType === "performance" || eventType === "error") && { event_name: eventName }),
       ...((eventType === "custom_event" || eventType === "outbound" || eventType === "error") && Object.keys(properties ?? {}).length > 0 && {

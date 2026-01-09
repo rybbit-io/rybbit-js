@@ -61,7 +61,7 @@ function collectMetric(metric: Metric): void {
 }
 
 export function initWebVitals(): void {
-  if (!currentConfig.trackWebVitals) {
+  if (!currentConfig.enableWebVitals) {
     log("Web vitals tracking is disabled.");
     return;
   }

@@ -14,7 +14,7 @@ export function setupAutoTracking(): void {
     return;
   }
 
-  if (!currentConfig.autoTrackPageviews) {
+  if (!currentConfig.autoTrackPageview) {
     log("Automatic pageview tracking is disabled.");
     return;
   }
@@ -23,12 +23,12 @@ export function setupAutoTracking(): void {
 
   currentPathname = getPathname();
 
-  pageviewTracker = currentConfig.debounce && currentConfig.debounce > 0
+  pageviewTracker = currentConfig.debounceDuration && currentConfig.debounceDuration > 0
     ? debounce(() => {
         const newPath = getPathname();
         notifyPageChange(newPath);
         track("pageview");
-      }, currentConfig.debounce)
+      }, currentConfig.debounceDuration)
     : () => {
         const newPath = getPathname();
         notifyPageChange(newPath);
@@ -39,7 +39,7 @@ export function setupAutoTracking(): void {
     pageviewTracker();
   });
 
-  if (currentConfig.autoTrackSpaRoutes) {
+  if (currentConfig.autoTrackSpa) {
     log("Setting up SPA route change tracking.");
     const originalPushState = history.pushState;
     const originalReplaceState = history.replaceState;
@@ -94,7 +94,7 @@ function handleClick(event: MouseEvent): void {
     element = element.parentElement;
   }
 
-  if (currentConfig.trackOutboundLinks && event.target instanceof Element) {
+  if (currentConfig.trackOutbound && event.target instanceof Element) {
     const link = event.target.closest("a");
     if (link && link.href && isOutboundLink(link.href)) {
       log("Outbound link clicked:", link.href);

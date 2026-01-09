@@ -4,7 +4,7 @@ import { log, logError } from "./utils";
 // Local-only defaults (not controlled by remote config)
 const localDefaults: Required<Omit<RybbitConfig, "analyticsHost" | "siteId" | "replayPrivacyConfig">> =
   {
-    debounce: 500,
+    debounceDuration: 500,
     skipPatterns: [],
     maskPatterns: [],
     debug: false,
@@ -12,12 +12,12 @@ const localDefaults: Required<Omit<RybbitConfig, "analyticsHost" | "siteId" | "r
 
 // Remote-controlled defaults (when remote config is disabled or fails)
 const remoteDefaults = {
-  autoTrackPageviews: true,
-  autoTrackSpaRoutes: true,
+  autoTrackPageview: true,
+  autoTrackSpa: true,
   trackQuerystring: true,
-  trackOutboundLinks: true,
-  trackWebVitals: false,
-  captureErrors: false,
+  trackOutbound: true,
+  enableWebVitals: false,
+  trackErrors: false,
   enableSessionReplay: false,
 };
 
@@ -47,12 +47,12 @@ export const currentConfig: Readonly<InternalRybbitConfig> = new Proxy(
 );
 
 interface RemoteConfig {
-  autoTrackPageviews: boolean;
-  autoTrackSpaRoutes: boolean;
+  autoTrackPageview: boolean;
+  autoTrackSpa: boolean;
   trackQuerystring: boolean;
-  trackOutboundLinks: boolean;
-  trackWebVitals: boolean;
-  captureErrors: boolean;
+  trackOutbound: boolean;
+  enableWebVitals: boolean;
+  trackErrors: boolean;
   enableSessionReplay: boolean;
 }
 
@@ -77,12 +77,12 @@ async function fetchRemoteConfig(
 
       // Map API field names to internal config field names
       return {
-        autoTrackPageviews: apiConfig.trackInitialPageView ?? remoteDefaults.autoTrackPageviews,
-        autoTrackSpaRoutes: apiConfig.trackSpaNavigation ?? remoteDefaults.autoTrackSpaRoutes,
+        autoTrackPageview: apiConfig.trackInitialPageView ?? remoteDefaults.autoTrackPageview,
+        autoTrackSpa: apiConfig.trackSpaNavigation ?? remoteDefaults.autoTrackSpa,
         trackQuerystring: apiConfig.trackUrlParams ?? remoteDefaults.trackQuerystring,
-        trackOutboundLinks: apiConfig.trackOutbound ?? remoteDefaults.trackOutboundLinks,
-        trackWebVitals: apiConfig.webVitals ?? remoteDefaults.trackWebVitals,
-        captureErrors: apiConfig.trackErrors ?? remoteDefaults.captureErrors,
+        trackOutbound: apiConfig.trackOutbound ?? remoteDefaults.trackOutbound,
+        enableWebVitals: apiConfig.webVitals ?? remoteDefaults.enableWebVitals,
+        trackErrors: apiConfig.trackErrors ?? remoteDefaults.trackErrors,
         enableSessionReplay: apiConfig.sessionReplay ?? remoteDefaults.enableSessionReplay,
       };
     } else {
@@ -145,7 +145,7 @@ export async function initializeConfig(options: RybbitConfig): Promise<boolean> 
     siteId: siteId,
 
     // Local settings (user can override)
-    debounce: Math.max(0, options.debounce ?? localDefaults.debounce),
+    debounceDuration: Math.max(0, options.debounceDuration ?? localDefaults.debounceDuration),
     skipPatterns: validatedSkipPatterns,
     maskPatterns: validatedMaskPatterns,
     debug: options.debug ?? localDefaults.debug,
@@ -154,12 +154,12 @@ export async function initializeConfig(options: RybbitConfig): Promise<boolean> 
     replayPrivacyConfig: options.replayPrivacyConfig,
 
     // Remote-controlled settings (from API, not user config)
-    autoTrackPageviews: finalRemoteConfig.autoTrackPageviews,
-    autoTrackSpaRoutes: finalRemoteConfig.autoTrackSpaRoutes,
+    autoTrackPageview: finalRemoteConfig.autoTrackPageview,
+    autoTrackSpa: finalRemoteConfig.autoTrackSpa,
     trackQuerystring: finalRemoteConfig.trackQuerystring,
-    trackOutboundLinks: finalRemoteConfig.trackOutboundLinks,
-    trackWebVitals: finalRemoteConfig.trackWebVitals,
-    captureErrors: finalRemoteConfig.captureErrors,
+    trackOutbound: finalRemoteConfig.trackOutbound,
+    enableWebVitals: finalRemoteConfig.enableWebVitals,
+    trackErrors: finalRemoteConfig.trackErrors,
     enableSessionReplay: finalRemoteConfig.enableSessionReplay,
   };
 

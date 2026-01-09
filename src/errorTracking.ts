@@ -7,7 +7,7 @@ let errorListener: ((event: ErrorEvent) => void) | null = null;
 let rejectionListener: ((event: PromiseRejectionEvent) => void) | null = null;
 
 export function setupErrorTracking(): void {
-  if (!currentConfig.captureErrors) {
+  if (!currentConfig.trackErrors) {
     return;
   }
 
@@ -123,8 +123,8 @@ function trackErrorData(errorName: string, errorData: ErrorData, context?: Track
 }
 
 export function captureError(error: Error | ErrorEvent, context?: TrackProperties): void {
-  if (!currentConfig.captureErrors) {
-    logError("Error tracking is not enabled. Set captureErrors: true in config.");
+  if (!currentConfig.trackErrors) {
+    logError("Error tracking is not enabled. Enable it via remote config.");
     return;
   }
 
