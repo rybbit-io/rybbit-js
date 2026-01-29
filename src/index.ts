@@ -3,6 +3,9 @@ import { track, identify, setTraits, clearUserId, getUserId } from "./core";
 import { setupAutoTracking, cleanupAutoTracking, setupDataAttributeTracking, addPageChangeCallback } from "./listeners";
 import { initWebVitals } from "./webvitals";
 import { setupErrorTracking, cleanupErrorTracking, captureError as captureErrorInternal } from "./errorTracking";
+import { setupClickTracking, cleanupClickTracking } from "./clickTracking";
+import { setupCopyTracking, cleanupCopyTracking } from "./copyTracking";
+import { setupFormTracking, cleanupFormTracking } from "./formTracking";
 import { initSessionReplay, cleanupSessionReplay, updateReplayUserId, startSessionReplay as startReplay, stopSessionReplay as stopReplay, isSessionReplayActive } from "./sessionReplay";
 import { log, logError } from "./utils";
 import { RybbitConfig, RybbitAPI, TrackProperties, PageChangeCallback } from "./types";
@@ -34,6 +37,9 @@ const rybbit: RybbitAPI = {
     initWebVitals();
 
     setupErrorTracking();
+    setupClickTracking();
+    setupCopyTracking();
+    setupFormTracking();
     await initSessionReplay(getUserId() || undefined);
   },
 
@@ -221,6 +227,9 @@ const rybbit: RybbitAPI = {
   cleanup: () => {
     cleanupAutoTracking();
     cleanupErrorTracking();
+    cleanupClickTracking();
+    cleanupCopyTracking();
+    cleanupFormTracking();
     cleanupSessionReplay();
     isInitialized = false;
   }

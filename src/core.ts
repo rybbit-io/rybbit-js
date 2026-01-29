@@ -96,7 +96,7 @@ export function track(
       referrer: document.referrer,
       type: eventType,
       ...((eventType === "custom_event" || eventType === "performance" || eventType === "error") && { event_name: eventName }),
-      ...((eventType === "custom_event" || eventType === "outbound" || eventType === "error") && Object.keys(properties ?? {}).length > 0 && {
+      ...((eventType === "custom_event" || eventType === "outbound" || eventType === "error" || eventType === "button_click" || eventType === "copy" || eventType === "form_submit" || eventType === "input_change") && Object.keys(properties ?? {}).length > 0 && {
         properties: JSON.stringify(properties),
       }),
       ...(eventType === "performance" && webVitals && { ...webVitals }),

@@ -35,9 +35,12 @@ export interface InternalRybbitConfig extends RybbitConfig {
   enableWebVitals: boolean;
   trackErrors: boolean;
   enableSessionReplay: boolean;
+  trackButtonClicks: boolean;
+  trackCopy: boolean;
+  trackFormInteractions: boolean;
 }
 
-export type EventType = "pageview" | "custom_event" | "outbound" | "performance" | "error";
+export type EventType = "pageview" | "custom_event" | "outbound" | "performance" | "error" | "button_click" | "copy" | "form_submit" | "input_change";
 
 export type PropertyValue = string | number | boolean;
 

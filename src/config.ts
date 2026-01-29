@@ -19,6 +19,9 @@ const remoteDefaults = {
   enableWebVitals: false,
   trackErrors: false,
   enableSessionReplay: false,
+  trackButtonClicks: false,
+  trackCopy: false,
+  trackFormInteractions: false,
 };
 
 let internalConfig: InternalRybbitConfig | null = null;
@@ -54,6 +57,9 @@ interface RemoteConfig {
   enableWebVitals: boolean;
   trackErrors: boolean;
   enableSessionReplay: boolean;
+  trackButtonClicks: boolean;
+  trackCopy: boolean;
+  trackFormInteractions: boolean;
 }
 
 async function fetchRemoteConfig(
@@ -84,6 +90,9 @@ async function fetchRemoteConfig(
         enableWebVitals: apiConfig.webVitals ?? remoteDefaults.enableWebVitals,
         trackErrors: apiConfig.trackErrors ?? remoteDefaults.trackErrors,
         enableSessionReplay: apiConfig.sessionReplay ?? remoteDefaults.enableSessionReplay,
+        trackButtonClicks: apiConfig.trackButtonClicks ?? remoteDefaults.trackButtonClicks,
+        trackCopy: apiConfig.trackCopy ?? remoteDefaults.trackCopy,
+        trackFormInteractions: apiConfig.trackFormInteractions ?? remoteDefaults.trackFormInteractions,
       };
     } else {
       logError(`Failed to fetch remote config: ${response.status}`);
@@ -161,6 +170,9 @@ export async function initializeConfig(options: RybbitConfig): Promise<boolean> 
     enableWebVitals: finalRemoteConfig.enableWebVitals,
     trackErrors: finalRemoteConfig.trackErrors,
     enableSessionReplay: finalRemoteConfig.enableSessionReplay,
+    trackButtonClicks: finalRemoteConfig.trackButtonClicks,
+    trackCopy: finalRemoteConfig.trackCopy,
+    trackFormInteractions: finalRemoteConfig.trackFormInteractions,
   };
 
   return true;
