@@ -43,7 +43,7 @@ function handleSubmit(event: Event): void {
   const properties: TrackProperties = {
     formId: form.id || "",
     formName: form.name || "",
-    formAction: form.action || "",
+    formAction: form.getAttribute("action") || "",
     method: (form.method || "get").toUpperCase(),
     fieldCount: form.elements.length,
     ...extractDataAttributes(form),

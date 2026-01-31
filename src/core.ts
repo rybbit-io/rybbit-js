@@ -57,7 +57,10 @@ export function track(
     if (eventType === "pageview" && typeof pathOverride === "string" && pathOverride.trim()) {
       log(`Using path override: ${pathOverride}`);
       try {
-        const overrideUrl = new URL(pathOverride, "http://dummybase");
+        if (!/^\//.test(pathOverride.trim()) && !/^https?:\/\//.test(pathOverride.trim())) {
+          throw new Error("pathOverride must start with /");
+        }
+        const overrideUrl = new URL(pathOverride.trim(), "http://dummybase");
         pathForTracking = overrideUrl.pathname;
         searchForTracking = overrideUrl.search || "";
         log(`Parsed override path: ${pathForTracking}, search: ${searchForTracking}`);

@@ -15,7 +15,9 @@
   ],
   "scripts": {
     "build": "tsup",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest",
+    "test:run": "vitest run"
   },
   "repository": {
     "type": "git",
@@ -48,6 +50,8 @@
     "rrweb": "^2.0.0-alpha.4",
     "tsup": "^8.5.0",
     "typescript": "^5.8.3",
-    "web-vitals": "^5.0.3"
+    "vitest": "^3.2.4",
+    "web-vitals": "^5.0.3",
+    "jsdom": "^26.0.0"
   }
 }

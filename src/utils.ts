@@ -26,6 +26,15 @@ export function isOutboundLink(url: string): boolean {
 
 export function patternToRegex(pattern: string): RegExp | null {
   try {
+    const REGEX_PREFIX = "re:";
+    if (pattern.startsWith(REGEX_PREFIX)) {
+      const rawRegex = pattern.slice(REGEX_PREFIX.length);
+      if (!rawRegex) {
+        throw new Error("Empty regex pattern");
+      }
+      return new RegExp(rawRegex);
+    }
+
     const DOUBLE_WILDCARD_TOKEN = "__DOUBLE_ASTERISK_TOKEN__";
     const SINGLE_WILDCARD_TOKEN = "__SINGLE_ASTERISK_TOKEN__";
 
@@ -35,6 +44,12 @@ export function patternToRegex(pattern: string): RegExp | null {
 
     let escaped = tokenized.replace(/[.+?^${}()|[\]\\]/g, "\\$&");
     escaped = escaped.replace(/\//g, "\\/");
+
+    // Handle /**/ pattern: match zero or more path segments (including zero)
+    escaped = escaped.replace(
+      new RegExp("\\\\/" + DOUBLE_WILDCARD_TOKEN + "\\\\/", "g"),
+      "(?:\\/.*)?\\/"
+    );
 
     let regexPattern = escaped
       .replace(new RegExp(DOUBLE_WILDCARD_TOKEN, "g"), ".*")
