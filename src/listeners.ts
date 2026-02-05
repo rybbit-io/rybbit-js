@@ -23,20 +23,23 @@ export function setupAutoTracking(): void {
 
   currentPathname = getPathname();
 
+  const firePageview = () => {
+    const newPath = getPathname();
+    notifyPageChange(newPath);
+    track("pageview");
+  };
+
   pageviewTracker = currentConfig.debounceDuration && currentConfig.debounceDuration > 0
     ? debounce(() => {
-        const newPath = getPathname();
-        notifyPageChange(newPath);
-        track("pageview");
+        firePageview();
       }, currentConfig.debounceDuration)
     : () => {
-        const newPath = getPathname();
-        notifyPageChange(newPath);
-        track("pageview");
+        firePageview();
       };
 
   requestAnimationFrame(() => {
-    pageviewTracker();
+    // Initial pageview should not be debounced.
+    firePageview();
   });
 
   if (currentConfig.autoTrackSpa) {
