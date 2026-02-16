@@ -40,12 +40,30 @@ function handleClick(event: MouseEvent): void {
     ...extractDataAttributes(buttonElement),
   };
 
-  const text = buttonElement.textContent?.trim().substring(0, 100);
+  const text = getButtonText(buttonElement);
   if (text) {
     properties.text = text;
   }
 
   track("button_click", { properties });
+}
+
+function getButtonText(element: HTMLElement): string | undefined {
+  const text = element.textContent?.trim().substring(0, 100);
+  if (text) return text;
+
+  const ariaLabel = element.getAttribute("aria-label")?.trim().substring(0, 100);
+  if (ariaLabel) return ariaLabel;
+
+  if (element.tagName === "INPUT") {
+    const value = (element as HTMLInputElement).value?.trim().substring(0, 100);
+    if (value) return value;
+  }
+
+  const title = element.getAttribute("title")?.trim().substring(0, 100);
+  if (title) return title;
+
+  return undefined;
 }
 
 function findButton(element: HTMLElement): HTMLElement | null {

@@ -40,12 +40,15 @@ function handleSubmit(event: Event): void {
   const form = event.target as HTMLFormElement;
   if (form.tagName !== "FORM") return;
 
+  const ariaLabel = form.getAttribute("aria-label");
+
   const properties: TrackProperties = {
     formId: form.id || "",
     formName: form.name || "",
     formAction: form.getAttribute("action") || "",
     method: (form.method || "get").toUpperCase(),
     fieldCount: form.elements.length,
+    ...(ariaLabel ? { ariaLabel } : {}),
     ...extractDataAttributes(form),
   };
 
@@ -58,15 +61,25 @@ function handleChange(event: Event): void {
 
   if (!["INPUT", "SELECT", "TEXTAREA"].includes(tagName)) return;
 
+  // Skip disabled inputs
+  if ((target as HTMLInputElement).disabled) return;
+
   // Skip hidden inputs and password fields for privacy
   if (tagName === "INPUT") {
     const inputType = (target as HTMLInputElement).type?.toLowerCase();
     if (inputType === "hidden" || inputType === "password") return;
   }
 
+  const inputName =
+    (target as HTMLInputElement).name ||
+    target.id ||
+    target.getAttribute("aria-label") ||
+    (target as HTMLInputElement).placeholder ||
+    "";
+
   const properties: TrackProperties = {
     element: tagName.toLowerCase(),
-    inputName: (target as HTMLInputElement).name || target.id || "",
+    inputName,
     ...extractDataAttributes(target),
   };
 
@@ -74,9 +87,12 @@ function handleChange(event: Event): void {
     properties.inputType = (target as HTMLInputElement).type?.toLowerCase();
   }
 
-  const formId = (target as HTMLInputElement).form?.id;
-  if (formId) {
-    properties.formId = formId;
+  const form = (target as HTMLInputElement).form;
+  if (form?.id) {
+    properties.formId = form.id;
+  }
+  if (form?.name) {
+    properties.formName = form.name;
   }
 
   track("input_change", { properties });

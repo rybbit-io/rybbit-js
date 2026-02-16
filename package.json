@@ -1,6 +1,6 @@
 {
   "name": "@rybbit/js",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "description": "Rybbit Web SDK",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
