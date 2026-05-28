@@ -86,6 +86,39 @@ describe("core tracking", () => {
     expect(body.querystring).toBe("");
   });
 
+  it("skips based on skipPatterns", async () => {
+    window.history.pushState({}, "", "/skip");
+    const { track } = await setupModule({ skipPatterns: ["/skip"] });
+
+    track("pageview");
+
+    expect(globalThis.fetch).toHaveBeenCalledTimes(0);
+  });
+
+  it("filters based on filter", async () => {
+    window.history.pushState({}, "", "/filter");
+    const { track } = await setupModule({ filter: (v: {pathname: string}) => v.pathname !== "/filter" });
+
+    track("pageview");
+
+    expect(globalThis.fetch).toHaveBeenCalledTimes(0);
+  });
+
+  it("transforms payload based on transform", async () => {
+    window.history.pushState({}, "", "/transform");
+    const { track } = await setupModule({ transform: (v: any) => ({
+        ...v,
+        page_title: "Transformed Title"
+      })});
+
+    track("pageview");
+
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+    const body = JSON.parse((globalThis.fetch as any).mock.calls[0][1].body);
+    expect(body.pathname).toBe("/transform");
+    expect(body.page_title).toBe("Transformed Title");
+  });
+
   it("handles valid path override for pageview", async () => {
     const { track } = await setupModule();
 

@@ -7,6 +7,8 @@ const localDefaults: Required<Omit<RybbitConfig, "analyticsHost" | "siteId" | "r
     debounceDuration: 500,
     skipPatterns: [],
     maskPatterns: [],
+    filter: _ => true,
+    transform: t => t,
     debug: false,
   };
 
@@ -158,6 +160,8 @@ export async function initializeConfig(options: RybbitConfig): Promise<boolean> 
     skipPatterns: validatedSkipPatterns,
     maskPatterns: validatedMaskPatterns,
     debug: options.debug ?? localDefaults.debug,
+    filter: options.filter ?? localDefaults.filter,
+    transform: options.transform ?? localDefaults.transform,
 
     // Session replay local settings
     replayPrivacyConfig: options.replayPrivacyConfig,

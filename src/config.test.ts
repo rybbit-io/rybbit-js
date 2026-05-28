@@ -32,12 +32,16 @@ describe("initializeConfig", () => {
     });
 
     const { initializeConfig, currentConfig } = await loadConfigModule();
+    const filterFn = () => true;
+    const transformFn = (t: any) => t;
     const result = await initializeConfig({
       analyticsHost: "https://analytics.example.com/",
       siteId: "site-123",
       debounceDuration: 250,
       skipPatterns: ["re:^/health$"],
       maskPatterns: ["/users/*"],
+      filter: filterFn,
+      transform: transformFn,
       debug: true,
     });
 
@@ -57,6 +61,9 @@ describe("initializeConfig", () => {
     expect(currentConfig.trackButtonClicks).toBe(true);
     expect(currentConfig.trackCopy).toBe(true);
     expect(currentConfig.trackFormInteractions).toBe(true);
+    expect(currentConfig.debug).toBe(true);
+    expect(currentConfig.filter).toBe(filterFn);
+    expect(currentConfig.transform).toBe(transformFn);
 
     expect(globalThis.fetch).toHaveBeenCalledWith(
       "https://analytics.example.com/site/tracking-config/site-123",

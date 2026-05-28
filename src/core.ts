@@ -106,9 +106,16 @@ export function track(
       ...(customUserId && { user_id: customUserId }),
     };
 
-    log("Sending track event:", payload);
+    if (currentConfig.filter && !currentConfig.filter(payload)) {
+      log("Event filtered by custom filter, not sending:", payload);
+      return;
+    }
 
-    const data = JSON.stringify(payload);
+    const transformedPayload = currentConfig.transform ? currentConfig.transform(payload) : payload;
+
+    log("Sending track event:", transformedPayload);
+
+    const data = JSON.stringify(transformedPayload);
     const endpoint = `${currentConfig.analyticsHost}/track`;
 
     if (navigator.sendBeacon) {
