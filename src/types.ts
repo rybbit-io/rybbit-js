@@ -8,6 +8,8 @@ export interface RybbitConfig {
   skipPatterns?: string[];
   maskPatterns?: string[];
   debug?: boolean;
+  filter?: (payload: TrackPayload) => boolean;
+  transform?: (payload: TrackPayload) => TrackPayload;
 
   // Session replay (local settings only - feature enabled via remote)
   replayPrivacyConfig?: {
