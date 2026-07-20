@@ -10,6 +10,7 @@ interface SessionReplayEvent {
 
 interface SessionReplayBatch {
   userId: string;
+  anonymousId?: string;
   events: SessionReplayEvent[];
   metadata?: {
     pageUrl: string;
@@ -219,6 +220,7 @@ function flushEvents(): void {
 
   const batch: SessionReplayBatch = {
     userId: currentUserId || "",
+    ...(currentConfig.persistentClientId && { anonymousId: currentConfig.persistentClientId }),
     events,
     metadata: {
       pageUrl: window.location.href,

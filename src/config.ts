@@ -22,7 +22,47 @@ const remoteDefaults = {
   trackButtonClicks: false,
   trackCopy: false,
   trackFormInteractions: false,
+  persistentClientIds: false,
 };
+
+const PERSISTENT_CLIENT_ID_KEY = "rybbit-persistent-id";
+
+function createPersistentId(): string {
+  try {
+    if (crypto?.randomUUID) {
+      return crypto.randomUUID();
+    }
+  } catch (e) {
+    // crypto may be unavailable in older browsers
+  }
+
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
+}
+
+// Only created/persisted when the site has opted into persistentClientIds
+// (consented, since this stores an identifier on the visitor's device).
+function getOrCreatePersistentClientId(): string | undefined {
+  try {
+    const stored = localStorage.getItem(PERSISTENT_CLIENT_ID_KEY);
+    if (stored) return stored;
+
+    const id = createPersistentId();
+    localStorage.setItem(PERSISTENT_CLIENT_ID_KEY, id);
+    return id;
+  } catch (e) {
+    return undefined;
+  }
+}
+
+// If the site disabled persistentClientIds after previously enabling it, drop
+// any identifier already stored — it must not linger once consent is withdrawn.
+function clearPersistentClientId(): void {
+  try {
+    localStorage.removeItem(PERSISTENT_CLIENT_ID_KEY);
+  } catch (e) {
+    // localStorage unavailable; nothing to clear
+  }
+}
 
 let internalConfig: InternalRybbitConfig | null = null;
 
@@ -60,6 +100,7 @@ interface RemoteConfig {
   trackButtonClicks: boolean;
   trackCopy: boolean;
   trackFormInteractions: boolean;
+  persistentClientIds: boolean;
 }
 
 async function fetchRemoteConfig(
@@ -93,6 +134,7 @@ async function fetchRemoteConfig(
         trackButtonClicks: apiConfig.trackButtonClicks ?? remoteDefaults.trackButtonClicks,
         trackCopy: apiConfig.trackCopy ?? remoteDefaults.trackCopy,
         trackFormInteractions: apiConfig.trackFormInteractions ?? remoteDefaults.trackFormInteractions,
+        persistentClientIds: apiConfig.persistentClientIds ?? remoteDefaults.persistentClientIds,
       };
     } else {
       logError(`Failed to fetch remote config: ${response.status}`);
@@ -173,7 +215,12 @@ export async function initializeConfig(options: RybbitConfig): Promise<boolean> 
     trackButtonClicks: finalRemoteConfig.trackButtonClicks,
     trackCopy: finalRemoteConfig.trackCopy,
     trackFormInteractions: finalRemoteConfig.trackFormInteractions,
+    persistentClientId: finalRemoteConfig.persistentClientIds ? getOrCreatePersistentClientId() : undefined,
   };
+
+  if (!finalRemoteConfig.persistentClientIds) {
+    clearPersistentClientId();
+  }
 
   return true;
 }

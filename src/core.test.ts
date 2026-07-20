@@ -96,6 +96,24 @@ describe("core tracking", () => {
     expect(body.querystring).toBe("?y=2");
   });
 
+  it("attaches anonymous_id when a persistent client id is configured", async () => {
+    const { track } = await setupModule({ persistentClientId: "visitor-abc-123" });
+
+    track("pageview");
+
+    const body = JSON.parse((globalThis.fetch as any).mock.calls[0][1].body);
+    expect(body.anonymous_id).toBe("visitor-abc-123");
+  });
+
+  it("omits anonymous_id when no persistent client id is configured", async () => {
+    const { track } = await setupModule();
+
+    track("pageview");
+
+    const body = JSON.parse((globalThis.fetch as any).mock.calls[0][1].body);
+    expect(body.anonymous_id).toBeUndefined();
+  });
+
   it("falls back to window location for invalid path override", async () => {
     const { track } = await setupModule();
 

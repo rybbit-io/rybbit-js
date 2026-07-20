@@ -38,6 +38,10 @@ export interface InternalRybbitConfig extends RybbitConfig {
   trackButtonClicks: boolean;
   trackCopy: boolean;
   trackFormInteractions: boolean;
+  // Persistent localStorage identifier, only present when the site has opted
+  // into persistentClientIds. Sent as anonymous_id for stronger identification
+  // accuracy than the cookieless IP+UA fingerprint.
+  persistentClientId?: string;
 }
 
 export type EventType = "pageview" | "custom_event" | "outbound" | "performance" | "error" | "button_click" | "copy" | "form_submit" | "input_change";
@@ -87,6 +91,7 @@ export interface TrackPayload extends WebVitalsData {
   event_name?: string; // Only for custom_event and performance
   properties?: string; // JSON stringified for custom_event and outbound
   user_id?: string;
+  anonymous_id?: string;
 }
 
 export interface RybbitAPI {

@@ -104,6 +104,7 @@ export function track(
       }),
       ...(eventType === "performance" && webVitals && { ...webVitals }),
       ...(customUserId && { user_id: customUserId }),
+      ...(currentConfig.persistentClientId && { anonymous_id: currentConfig.persistentClientId }),
     };
 
     log("Sending track event:", payload);

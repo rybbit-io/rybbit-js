@@ -8,6 +8,7 @@ const loadConfigModule = async () => {
 describe("initializeConfig", () => {
   beforeEach(() => {
     (globalThis as any).fetch = vi.fn();
+    localStorage.clear();
   });
 
   afterEach(() => {
@@ -145,6 +146,59 @@ describe("initializeConfig", () => {
         siteId: "site-456",
       })
     ).toBe(false);
+  });
+
+  it("does not create a persistent client id when persistentClientIds is not enabled", async () => {
+    (globalThis.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({}),
+    });
+
+    const { initializeConfig, currentConfig } = await loadConfigModule();
+    await initializeConfig({ analyticsHost: "https://analytics.example.com", siteId: "site-123" });
+
+    expect(currentConfig.persistentClientId).toBeUndefined();
+    expect(localStorage.getItem("rybbit-persistent-id")).toBeNull();
+  });
+
+  it("creates and persists a client id when persistentClientIds is enabled", async () => {
+    (globalThis.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ persistentClientIds: true }),
+    });
+
+    const { initializeConfig, currentConfig } = await loadConfigModule();
+    await initializeConfig({ analyticsHost: "https://analytics.example.com", siteId: "site-123" });
+
+    expect(currentConfig.persistentClientId).toBeTruthy();
+    expect(localStorage.getItem("rybbit-persistent-id")).toBe(currentConfig.persistentClientId);
+  });
+
+  it("reuses an existing stored client id across initializations", async () => {
+    localStorage.setItem("rybbit-persistent-id", "existing-id-123");
+    (globalThis.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ persistentClientIds: true }),
+    });
+
+    const { initializeConfig, currentConfig } = await loadConfigModule();
+    await initializeConfig({ analyticsHost: "https://analytics.example.com", siteId: "site-123" });
+
+    expect(currentConfig.persistentClientId).toBe("existing-id-123");
+  });
+
+  it("clears a previously stored client id when persistentClientIds is disabled", async () => {
+    localStorage.setItem("rybbit-persistent-id", "stale-id-456");
+    (globalThis.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ persistentClientIds: false }),
+    });
+
+    const { initializeConfig, currentConfig } = await loadConfigModule();
+    await initializeConfig({ analyticsHost: "https://analytics.example.com", siteId: "site-123" });
+
+    expect(currentConfig.persistentClientId).toBeUndefined();
+    expect(localStorage.getItem("rybbit-persistent-id")).toBeNull();
   });
 
   it("normalizes debounce duration and pattern inputs", async () => {
