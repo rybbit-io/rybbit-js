@@ -111,16 +111,9 @@ export function track(
     const data = JSON.stringify(payload);
     const endpoint = `${currentConfig.analyticsHost}/track`;
 
-    if (navigator.sendBeacon) {
-      const sent = navigator.sendBeacon(endpoint, new Blob([data], { type: "application/json" }));
-      if (!sent) {
-        logError("sendBeacon failed, falling back to fetch.");
-        sendWithFetch(endpoint, data);
-      }
-    } else {
-      sendWithFetch(endpoint, data);
-    }
-
+    // JSON beacons require credentialed CORS, and a successful queue does not
+    // guarantee delivery. Keepalive fetch works without cross-origin credentials.
+    sendWithFetch(endpoint, data);
   } catch (error) {
     logError("Error during tracking:", error);
   }
@@ -134,6 +127,7 @@ function sendWithFetch(endpoint: string, data: string): void {
     },
     body: data,
     mode: "cors",
+    credentials: "same-origin",
     keepalive: true,
   }).catch(error => {
     logError("Fetch request failed:", error);
