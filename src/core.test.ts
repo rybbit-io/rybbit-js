@@ -39,6 +39,7 @@ describe("core tracking", () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   it("skips tracking when opted out via localStorage", async () => {
@@ -106,26 +107,37 @@ describe("core tracking", () => {
     expect(body.querystring).toBe("?x=1");
   });
 
-  it("uses sendBeacon when available", async () => {
+  it("uses non-credentialed cross-origin fetch even when sendBeacon can queue events", async () => {
     const sendBeacon = vi.fn().mockReturnValue(true);
-    Object.defineProperty(navigator, "sendBeacon", { value: sendBeacon, configurable: true });
+    vi.stubGlobal("navigator", { language: "en-US", sendBeacon });
     const { track } = await setupModule();
 
     track("pageview");
 
-    expect(sendBeacon).toHaveBeenCalledTimes(1);
-    expect(globalThis.fetch).not.toHaveBeenCalled();
+    expect(sendBeacon).not.toHaveBeenCalled();
+    expect(globalThis.fetch).toHaveBeenCalledExactlyOnceWith(
+      "https://analytics.example.com/track",
+      expect.objectContaining({
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: expect.any(String),
+        mode: "cors",
+        credentials: "same-origin",
+        keepalive: true,
+      })
+    );
   });
 
-  it("falls back to fetch when sendBeacon fails", async () => {
-    const sendBeacon = vi.fn().mockReturnValue(false);
-    Object.defineProperty(navigator, "sendBeacon", { value: sendBeacon, configurable: true });
+  it("logs fetch failures without an unhandled rejection", async () => {
     const { track } = await setupModule();
+    const { logError } = await import("./utils");
+    const error = new TypeError("Failed to fetch");
+    vi.mocked(globalThis.fetch).mockRejectedValueOnce(error);
 
     track("pageview");
+    await Promise.resolve();
 
-    expect(sendBeacon).toHaveBeenCalledTimes(1);
-    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+    expect(logError).toHaveBeenCalledWith("Fetch request failed:", error);
   });
 
   it("includes event properties for custom events", async () => {
