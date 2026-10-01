@@ -57,4 +57,47 @@ describe("session replay", () => {
       expect(init.keepalive).toBe(false);
     }
   });
+
+  it("drops a batch the server rejects with a non-retryable status", async () => {
+    (globalThis.fetch as any).mockResolvedValue({ ok: false, status: 413 });
+    const { onReplayPageChange } = await setupModule();
+
+    emit({ type: 2, data: {}, timestamp: 1 });
+    onReplayPageChange();
+    await vi.waitFor(() => expect(globalThis.fetch).toHaveBeenCalledTimes(1));
+    onReplayPageChange();
+    await new Promise((resolve) => setTimeout(resolve));
+    onReplayPageChange();
+
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("retries a failed batch at most three times", async () => {
+    (globalThis.fetch as any).mockResolvedValue({ ok: false, status: 503 });
+    const { onReplayPageChange } = await setupModule();
+
+    emit({ type: 2, data: {}, timestamp: 1 });
+    for (let i = 0; i < 5; i++) {
+      onReplayPageChange();
+      await new Promise((resolve) => setTimeout(resolve));
+    }
+
+    expect(globalThis.fetch).toHaveBeenCalledTimes(3);
+  });
+
+  it("retries a batch after a network error", async () => {
+    (globalThis.fetch as any)
+      .mockRejectedValueOnce(new TypeError("Failed to fetch"))
+      .mockResolvedValue({ ok: true });
+    const { onReplayPageChange } = await setupModule();
+
+    emit({ type: 2, data: {}, timestamp: 1 });
+    onReplayPageChange();
+    await new Promise((resolve) => setTimeout(resolve));
+    onReplayPageChange();
+
+    expect(globalThis.fetch).toHaveBeenCalledTimes(2);
+    const [, init] = (globalThis.fetch as any).mock.calls[1];
+    expect(JSON.parse(init.body).events).toHaveLength(1);
+  });
 });

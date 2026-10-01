@@ -45,6 +45,22 @@ let eventBuffer: SessionReplayEvent[] = [];
 let batchTimer: number | undefined;
 let currentUserId: string | undefined;
 
+// Failed batches are re-queued, but only a few times so a persistently
+// failing server can't make the buffer grow without bound.
+const MAX_SEND_ATTEMPTS = 3;
+const sendAttempts = new WeakMap<SessionReplayEvent, number>();
+
+class ReplaySendError extends Error {
+  constructor(readonly status: number) {
+    super(`Failed to send replay batch: ${status}`);
+  }
+
+  // 4xx responses (other than timeout/rate limiting) will fail the same way again.
+  get retryable(): boolean {
+    return this.status >= 500 || this.status === 408 || this.status === 429;
+  }
+}
+
 export async function initSessionReplay(userId?: string): Promise<void> {
   if (!currentConfig.enableSessionReplay) {
     return;
@@ -230,8 +246,19 @@ function flushEvents(): void {
 
   sendBatch(batch).catch((error) => {
     logError("Failed to send session replay batch:", error);
-    // Re-queue the events for retry since this batch failed
-    eventBuffer.unshift(...events);
+    if (error instanceof ReplaySendError && !error.retryable) {
+      return;
+    }
+    // Re-queue the events for retry, dropping any that have used up their attempts
+    const retryable = events.filter((event) => {
+      const attempts = (sendAttempts.get(event) ?? 0) + 1;
+      sendAttempts.set(event, attempts);
+      return attempts < MAX_SEND_ATTEMPTS;
+    });
+    if (retryable.length < events.length) {
+      logError(`Dropping ${events.length - retryable.length} session replay events after ${MAX_SEND_ATTEMPTS} failed attempts`);
+    }
+    eventBuffer.unshift(...retryable);
   });
 }
 
@@ -252,7 +279,7 @@ async function sendBatch(batch: SessionReplayBatch): Promise<void> {
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to send replay batch: ${response.status}`);
+    throw new ReplaySendError(response.status);
   }
 
   log(`Session replay batch sent: ${batch.events.length} events`);
