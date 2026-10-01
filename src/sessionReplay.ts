@@ -45,11 +45,6 @@ let eventBuffer: SessionReplayEvent[] = [];
 let batchTimer: number | undefined;
 let currentUserId: string | undefined;
 
-// Browsers cap the combined body size of in-flight keepalive requests at 64 KiB
-// and reject anything larger outright. Replay batches (especially full DOM
-// snapshots) routinely exceed that, so only small batches can use keepalive.
-const KEEPALIVE_MAX_BYTES = 60 * 1024;
-
 export async function initSessionReplay(userId?: string): Promise<void> {
   if (!currentConfig.enableSessionReplay) {
     return;
@@ -243,7 +238,6 @@ function flushEvents(): void {
 async function sendBatch(batch: SessionReplayBatch): Promise<void> {
   const endpoint = `${currentConfig.analyticsHost}/session-replay/record/${currentConfig.siteId}`;
   const data = JSON.stringify(batch);
-  const keepalive = new TextEncoder().encode(data).length <= KEEPALIVE_MAX_BYTES;
 
   const response = await fetch(endpoint, {
     method: "POST",
@@ -252,7 +246,9 @@ async function sendBatch(batch: SessionReplayBatch): Promise<void> {
     },
     body: data,
     mode: "cors",
-    keepalive,
+    // Browsers share one 64 KiB budget across all in-flight keepalive requests.
+    // Replay batches would exhaust it and cause /track keepalive requests to fail.
+    keepalive: false,
   });
 
   if (!response.ok) {

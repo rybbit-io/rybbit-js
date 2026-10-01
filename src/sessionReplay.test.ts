@@ -43,25 +43,18 @@ describe("session replay", () => {
     vi.restoreAllMocks();
   });
 
-  it("uses keepalive for batches under the browser keepalive limit", async () => {
-    const { stopSessionReplay } = await setupModule();
+  it("never uses keepalive, so replay cannot exhaust the shared keepalive budget", async () => {
+    const { onReplayPageChange, stopSessionReplay } = await setupModule();
 
     emit({ type: 3, data: { small: true }, timestamp: 1 });
-    stopSessionReplay();
-
-    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
-    const [, init] = (globalThis.fetch as any).mock.calls[0];
-    expect(init.keepalive).toBe(true);
-  });
-
-  it("does not use keepalive for batches over the 64 KiB keepalive limit", async () => {
-    const { stopSessionReplay } = await setupModule();
-
+    onReplayPageChange();
     emit({ type: 2, data: { snapshot: "x".repeat(100 * 1024) }, timestamp: 1 });
     stopSessionReplay();
 
-    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
-    const [, init] = (globalThis.fetch as any).mock.calls[0];
-    expect(init.keepalive).toBe(false);
+    const calls = (globalThis.fetch as any).mock.calls;
+    expect(calls).toHaveLength(2);
+    for (const [, init] of calls) {
+      expect(init.keepalive).toBe(false);
+    }
   });
 });
